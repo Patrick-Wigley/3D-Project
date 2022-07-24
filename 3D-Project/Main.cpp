@@ -1,14 +1,5 @@
-#include <GL\glew.h>
-#include <GLFW/glfw3.h>
-
-// Needed for file reading
-#include <string>
-#include <sstream>
-#include <fstream>
-
-// For debug outputs
-#include <iostream>
-
+#include "GlobalItems.h"
+#include "Obj.h"
 
 const static struct ShaderCode
 {
@@ -132,68 +123,23 @@ int main(void)
     glewInit();
 
 
-    // Vertex Array Obj
-    unsigned int vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
 
-
-
-    // VERTICES
-    const float VERTICES[]
-    {
-        -0.5f, -0.5f, // 0
-         0.5f, -0.5f, // 1
-        -0.5f,  0.5f, // 2
-         0.5f,  0.5f  // 3
-
-    };
-
+    Obj square = Obj();
+   
     
-    unsigned int vertexBuffer;
-    glGenBuffers(1, &vertexBuffer);                                                                 // Generate
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);                                                    // Bind
-    
-    //Buffer must be initially binded before making changes to it
-    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), VERTICES, GL_STATIC_DRAW);                  // Pass in data
-    
-    /*NOTES*/
-    // Vertex consists of many attributes such as (Normals, texcoords, col, pos)
-    // Stride specifies size of bytes each vertex is to step over each index.
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
-
-
-    // Indices
-    const unsigned int INDICES[]
-    {
-        0, 1, 2,
-        2, 3, 1
-    };
-
-    unsigned int ibo;
-    glGenBuffers(1, &ibo);                                                             
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);                                                   
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), INDICES, GL_STATIC_DRAW);
-
-
+    // Shader
     ShaderCode shaders = ParseShader("3D-Project\\Shaders\\main.shader");
-    std::string vs = shaders.v;
-    std::string fs = shaders.f;
-
-  
-
-    unsigned int shader = CreateShader(vs, fs);
-
+    unsigned int shader = CreateShader(shaders.v, shaders.f);
     glUseProgram(shader);
 
-
+    // Shader's Uniform Vars
     float offset = .4f;
     int location = glGetUniformLocation(shader, "u_offset");
 
-    
+
+
+    // Refresh buffers
     glBindVertexArray(0);
-    //glUseProgram(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -204,8 +150,8 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
 
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        square.Bind();
+                  
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         
         if (offset >= 1)
