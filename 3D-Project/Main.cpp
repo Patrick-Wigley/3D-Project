@@ -36,9 +36,9 @@ static ShaderCode ParseShader(const std::string filename)
     while (std::getline(file, line))
     {
         std::string line_ = line;
-        if (!line.find("S|"))
+        if (line.find("S|") != std::string::npos)
         {           
-            if (line[2] == 'V')
+            if (line.find("Vertex") != std::string::npos)
             {
                 type = Type::V;
             }
@@ -106,12 +106,6 @@ static unsigned int CreateShader(std::string& vertexShader, std::string& fragmen
     return program;
 }
 
-struct shader
-{
-
-};
-
-static std::string forgor;
 
 
 int main(void)
@@ -135,12 +129,14 @@ int main(void)
 
     glewInit();
 
-
-    const float VERTICES[6]
+    // VERTICES
+    const float VERTICES[]
     {
-        -0.5f, -0.5f,
-         0.0f,  0.5f,
-         0.5f, -0.5f
+        -0.5f, -0.5f, // 0
+         0.5f, -0.5f, // 1
+        -0.5f,  0.5f, // 2
+         0.5f,  0.5f  // 3
+
     };
 
     
@@ -149,7 +145,7 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);                                                    // Bind
     
     //Buffer must be initially binded before making changes to it
-    glBufferData(GL_ARRAY_BUFFER, sizeof(VERTICES), VERTICES, GL_STATIC_DRAW);                  // Pass in data
+    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), VERTICES, GL_STATIC_DRAW);                  // Pass in data
     
     /*NOTES*/
     // Vertex consists of many attributes such as (Normals, texcoords, col, pos)
@@ -157,6 +153,18 @@ int main(void)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 
+
+    // Indices
+    const unsigned int INDICES[]
+    {
+        0, 1, 2,
+        2, 3, 1
+    };
+
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);                                                             
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);                                                   
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), INDICES, GL_STATIC_DRAW);
 
 
     ShaderCode shaders = ParseShader("3D-Project\\Shaders\\main.shader");
@@ -176,9 +184,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
