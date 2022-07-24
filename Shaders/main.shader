@@ -4,10 +4,11 @@ S|Vertex
 layout(location = 0) in vec4 position;
 out vec4 pos;
 
+uniform float u_offset;
 void main()                               
 {                                         
-    gl_Position = position; 
-    pos = position;
+    gl_Position = position * u_offset + 1;
+    
 }                                         
 
 
@@ -16,8 +17,8 @@ S|Fragment
                                           
 layout(location = 0) out vec4 colour;     
 
-in vec4 pos;
+
 void main()                               
 {
-    colour = vec4(.5, .5, .5, 1.0) * pos+.1;        
+    colour = vec4(.1, .5, .3, 1.0);
 }                                         

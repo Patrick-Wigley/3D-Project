@@ -116,6 +116,8 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "3D Game", NULL, NULL);
     if (!window)
@@ -128,6 +130,14 @@ int main(void)
     glfwMakeContextCurrent(window);
 
     glewInit();
+
+
+    // Vertex Array Obj
+    unsigned int vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+
 
     // VERTICES
     const float VERTICES[]
@@ -177,6 +187,16 @@ int main(void)
 
     glUseProgram(shader);
 
+
+    float offset = .4f;
+    int location = glGetUniformLocation(shader, "u_offset");
+
+    
+    glBindVertexArray(0);
+    //glUseProgram(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -184,7 +204,16 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
 
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        
+        if (offset >= 1)
+            offset = 0;
+        offset += .01f;
+        glUniform1f(location, offset);
+
+
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
