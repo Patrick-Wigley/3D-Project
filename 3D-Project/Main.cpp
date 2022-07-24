@@ -1,8 +1,64 @@
 #include <GL\glew.h>
 #include <GLFW/glfw3.h>
 
+// Needed for file reading
 #include <string>
+#include <sstream>
+#include <fstream>
+
+// For debug outputs
 #include <iostream>
+
+
+const static struct ShaderCode
+{
+    std::string v;
+    std::string f;
+};
+
+
+/* Read shader files & store Vertex & Fragment shaders as strings */
+/* Only works for shaders in format I have put it in e.g. 'S|Vertex' */
+static ShaderCode ParseShader(const std::string filename)
+{
+    static enum class Type
+    {
+        V = 0, F, NONE
+    }type = Type::NONE;
+
+
+    std::ifstream file(filename);
+    // Vertex & Fragment shaders
+    std::stringstream shaders[2];
+
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        std::string line_ = line;
+        if (!line.find("S|"))
+        {           
+            if (line[2] == 'V')
+            {
+                type = Type::V;
+            }
+            else
+            {
+                type = Type::F;
+            }
+        }
+        else
+        {
+            shaders[(int)type] << line + "\n";
+        }
+    };
+
+    file.close();
+    return { shaders[0].str(), shaders[1].str() };
+};
+
+
+
 
 static unsigned int CompileShader(const std::string& shaderFile, unsigned int type)
 {
@@ -50,6 +106,12 @@ static unsigned int CreateShader(std::string& vertexShader, std::string& fragmen
     return program;
 }
 
+struct shader
+{
+
+};
+
+static std::string forgor;
 
 
 int main(void)
@@ -96,23 +158,12 @@ int main(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
 
 
-    std::string vs =
-        "#version 330 core                          \n"
-        "                                           \n"
-        "layout(location = 0) in vec4 position;     \n"
-        "void main()                                \n"
-        "{                                          \n"
-        "gl_Position = position;                    \n"
-        "}                                          \n";
-    std::string fs =
-        "#version 330 core                          \n"
-        "                                           \n"
-        "layout(location = 0) out vec4 colour;      \n"
-        "void main()                                \n"
-        "{                                          \n"
-        "colour = vec4(1.0, 0.0, 0.0, 1.0);         \n"
-        "}                                          \n";
 
+    ShaderCode shaders = ParseShader("3D-Project\\Shaders\\main.shader");
+    std::string vs = shaders.v;
+    std::string fs = shaders.f;
+
+  
 
     unsigned int shader = CreateShader(vs, fs);
 
