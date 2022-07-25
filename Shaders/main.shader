@@ -1,13 +1,19 @@
 S|Vertex
 #version 330 core
 
-layout(location = 0) in vec4 position;
+layout(location = 0) in vec3 position;
 out vec4 pos;
 
-uniform float u_offset;
+// Camera Vars
+uniform mat4 u_View;
+uniform mat4 u_Projection;
+uniform mat4 u_ModelMatrix;
+
+uniform vec3 u_CameraPos;
+
 void main()                               
 {                                         
-    gl_Position = position * u_offset + 1;
+    gl_Position = (u_Projection * u_View * u_ModelMatrix) * vec4(position, 1.0);
     
 }                                         
 
@@ -18,7 +24,8 @@ S|Fragment
 layout(location = 0) out vec4 colour;     
 
 
+uniform float u_offset;
 void main()                               
 {
-    colour = vec4(.1, .5, .3, 1.0);
+    colour = vec4(.1 + u_offset, .5 + u_offset, .3 + u_offset , 1.0);
 }                                         

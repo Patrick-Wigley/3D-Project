@@ -1,5 +1,6 @@
 #include "GlobalItems.h"
 #include "Obj.h"
+#include "Camera.h"
 
 const static struct ShaderCode
 {
@@ -122,7 +123,7 @@ int main(void)
 
     glewInit();
 
-
+    
 
     Obj square = Obj();
    
@@ -143,9 +144,25 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+    
+    int size[2]{ 0, 0 };
+    glfwGetWindowSize(window, &size[0], &size[1]);
+
+    Camera camera = Camera(window, shader, size);
+
+
+    int u_modelMatrix = glGetUniformLocation(shader, "u_ModelMatrix");
+    
+    float x = 0, y = 0, z = -10;
+    
+    glm::mat4 ModelMatrix = glm::rotate(glm::mat4(1), glm::radians(55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    
+    float rotation = 0;
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -161,9 +178,18 @@ int main(void)
 
 
 
+
+        rotation += .7;
+        ModelMatrix = glm::rotate(glm::mat4(1), glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
+        camera.Update();
+        glUniformMatrix4fv(u_modelMatrix, 1, false, glm::value_ptr(ModelMatrix));
+
+
+
+
+
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
-
         /* Poll for and process events */
         glfwPollEvents();
     }
