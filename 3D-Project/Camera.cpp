@@ -7,8 +7,8 @@ const void Camera::Update()
 	this->KeyUpdate();
 
 	// Update Matrices
-	//glm::vec3 position_vec = glm::vec3(pos[0], pos[1], pos[2]);
-	//this->view = glm::lookAt(position_vec, position_vec + direction, glm::vec3(0, 1, 0));
+	glm::vec3 position_vec = glm::vec3(pos[0], pos[1], pos[2] - 5);
+	this->view = glm::lookAt(position_vec, position_vec + direction, glm::vec3(0, 1, 0));
 	//this->rotation = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0) + direction, glm::vec3(0, 1, 0));
 
 
