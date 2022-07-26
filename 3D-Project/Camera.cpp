@@ -1,13 +1,20 @@
 #include "Camera.h"
 #include "glm/gtx/string_cast.hpp"
 
+
+constexpr static int X = 0;
+constexpr static int Y = 1;
+constexpr static int Z = 2;
+
+
+
 const void Camera::Update()
 {
 	this->DirectionUpdate();
 	this->KeyUpdate();
 
 	// Update Matrices
-	glm::vec3 position_vec = glm::vec3(pos[0], pos[1], pos[2] - 5);
+	glm::vec3 position_vec = glm::vec3(pos[X], pos[Y], pos[Z] - 5);
 	this->view = glm::lookAt(position_vec, position_vec + direction, glm::vec3(0, 1, 0));
 	//this->rotation = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0) + direction, glm::vec3(0, 1, 0));
 
@@ -15,7 +22,7 @@ const void Camera::Update()
 	// Update Uniforms
 	glUniformMatrix4fv(u_projection, 1, false, glm::value_ptr(projection));
 	glUniformMatrix4fv(u_view, 1, false, glm::value_ptr(view));
-	glUniform3f(u_pos, pos[0], pos[1], pos[2]);
+	glUniform3f(u_pos, pos[X], pos[Y], pos[Z]);
 
 };
 
@@ -32,6 +39,13 @@ void Camera::DirectionUpdate()
 	this->previous_x = mouse_x;
 	this->previous_y = mouse_y;
 
+
+	// Y Rotation Lock
+	if (pitch > 1.5f)
+		pitch = 1.5f;
+	else if (pitch < -1.5f)
+		pitch = -1.5f;
+
 	glm::vec3 camDir;
 	camDir.x = cos(yaw) * cos(pitch);
 	camDir.y = sin(pitch);
@@ -43,6 +57,30 @@ void Camera::DirectionUpdate()
 void Camera::KeyUpdate()
 {
 
+	if (glfwGetKey(this->p_window, GLFW_KEY_W))
+	{
+		this->pos[X] += cos(yaw) / (15-this->movement_speed);
+		this->pos[Z] += sin(yaw) / (15-this->movement_speed);
+	}
+
+	else if (glfwGetKey(this->p_window, GLFW_KEY_S))
+	{
+		this->pos[X] -= cos(yaw) / (15-this->movement_speed);
+		this->pos[Z] -= sin(yaw) / (15-this->movement_speed);
+	}
+
+	if (glfwGetKey(this->p_window, GLFW_KEY_D))
+	{
+		this->pos[X] += cos(yaw + 1.6f) / 15;
+		this->pos[Z] += sin(yaw + 1.6f) / 15;
+	}
+
+	else if (glfwGetKey(this->p_window, GLFW_KEY_A))
+	{
+		this->pos[X] -= cos(yaw + 1.6f) / 15;
+		this->pos[Z] -= sin(yaw + 1.6f) / 15;
+	}
+	
 };
 
 

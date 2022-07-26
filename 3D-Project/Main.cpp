@@ -169,7 +169,7 @@ int main(void)
 
         square.Bind();
                   
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
         
         if (offset >= 1)
             offset = 0;

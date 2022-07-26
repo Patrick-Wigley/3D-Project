@@ -14,12 +14,12 @@ Obj::Obj()
 	this->AttachBufferData();
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+	glVertexAttribPointer(0, VERTICE_SIZE, GL_FLOAT, GL_FALSE, VERTICE_SIZE * sizeof(float), 0);
 
 
 	glGenBuffers(1, &this->ibo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), INDICES, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(INDICES), INDICES, GL_STATIC_DRAW);
 
 
 };
@@ -28,7 +28,7 @@ Obj::Obj()
 void Obj::AttachBufferData()
 {
 
-	glBufferData(GL_ARRAY_BUFFER, 4 * 3 * sizeof(float), VERTICES, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 8 * 3 * sizeof(float), VERTICES, GL_STATIC_DRAW);
 }
 
 void Obj::Bind() 
