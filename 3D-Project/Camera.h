@@ -13,7 +13,12 @@ private:
 
 	glm::vec3 direction;
 
-	const float sensitivity = .1f;
+	const float sensitivity = .01f;
+
+	// Adjustable factors
+private:
+	float movement_speed = 1;
+
 
 	// Matrices
 private:
