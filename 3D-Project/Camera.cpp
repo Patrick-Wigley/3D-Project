@@ -20,9 +20,9 @@ const void Camera::Update()
 
 
 	// Update Uniforms
-	glUniformMatrix4fv(u_projection, 1, false, glm::value_ptr(projection));
-	glUniformMatrix4fv(u_view, 1, false, glm::value_ptr(view));
-	glUniform3f(u_pos, pos[X], pos[Y], pos[Z]);
+	glUniformMatrix4fv(r_u_projection, 1, false, glm::value_ptr(projection));
+	glUniformMatrix4fv(r_u_view, 1, false, glm::value_ptr(view));
+	glUniform3f(r_u_pos, pos[X], pos[Y], pos[Z]);
 
 };
 
@@ -84,12 +84,12 @@ void Camera::KeyUpdate()
 };
 
 
-Camera::Camera(Window* window, unsigned int& shader, int window_size[])
+Camera::Camera(Window* window, Shader& shader, int window_size[])
 	: p_window(window),
 	// Uniforms
-	u_view(glGetUniformLocation(shader, "u_View")),
-	u_projection(glGetUniformLocation(shader, "u_Projection")),
-	u_pos(glGetUniformLocation(shader, "u_CameraPos"))
+	r_u_view(shader.u_view),
+	r_u_projection(shader.u_projection),
+	r_u_pos(shader.u_cam_pos)
 	// NOTE: projection Matrix is setup once
 
 {

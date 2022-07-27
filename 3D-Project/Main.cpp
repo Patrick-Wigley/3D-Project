@@ -29,7 +29,12 @@ static void event_updates(GLFWwindow* window)
 }
 
 
+/* 
+Notes: 
+- Currently only using ONE VertexArrayObject. When rendering a model, contents in array are swapped out to instances Vertex 
+  Contents.
 
+*/
 
 
 int main(void)
@@ -57,24 +62,31 @@ int main(void)
     glewInit();
 
     
-
+    // Predominant VAO
+    unsigned int vao;
+    // Creating Vertex Array Object & Binding
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
 
     Obj square = Obj();
     
+    // Predominant Shader
     Shader shader_obj;
     unsigned int& shader = shader_obj.shader;
-   
     glUseProgram(shader);
 
-    // Shader's Uniform Vars
+
+    // just an universely used colour changer for models 
     float offset = .4f;
-    int location = glGetUniformLocation(shader, "u_offset");
+    int u_col_offset = glGetUniformLocation(shader, "u_offset");
+
+
+   
 
 
 
     // Refresh buffers
-    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -82,16 +94,13 @@ int main(void)
     int size[2]{ 0, 0 };
     glfwGetWindowSize(window, &size[0], &size[1]);
 
-    Camera camera = Camera(window, shader, size);
 
 
-    int u_modelMatrix = glGetUniformLocation(shader, "u_ModelMatrix");
+    Camera camera = Camera(window, shader_obj, size);
     
-    float x = 0, y = 0, z = -10;
     
-    glm::mat4 ModelMatrix = glm::rotate(glm::mat4(1), glm::radians(55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    
-    float rotation = 0;
+   
+
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -100,25 +109,25 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
+        camera.Update();
 
-        square.Bind();
-                  
-        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
+        square.update(shader_obj);
+        
+        
+
         
         if (offset >= 1)
             offset = 0;
         offset += .01f;
-        glUniform1f(location, offset);
+        glUniform1f(u_col_offset, offset);
 
 
+        // For one square ATM
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
 
 
-        rotation += .7;
-        ModelMatrix = glm::rotate(glm::mat4(1), glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
-        camera.Update();
-        glUniformMatrix4fv(u_modelMatrix, 1, false, glm::value_ptr(ModelMatrix));
-
-
+        
+       
 
         event_updates(window);
 

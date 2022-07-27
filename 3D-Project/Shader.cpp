@@ -110,6 +110,15 @@ Shader::Shader()
     // Shader
     ShaderCode shaders = ParseShader("3D-Project\\Shaders\\main.shader");
     this->shader = CreateShader(shaders.v, shaders.f);
+    
+    // Uniforms
+    this->u_modelMatrix = glGetUniformLocation(shader, "u_ModelMatrix");
+
+    this->u_view = glGetUniformLocation(shader, "u_View");
+    this->u_projection = glGetUniformLocation(shader, "u_Projection");
+    this->u_cam_pos = glGetUniformLocation(shader, "u_CameraPos");
+
+
 };
 
 // Activate Shader
@@ -121,6 +130,11 @@ void Shader::Bind()
 
 // 
 void Shader::AttachUniforms()
+{
+
+}
+
+void Shader::UpdateUniforms()
 {
 
 }

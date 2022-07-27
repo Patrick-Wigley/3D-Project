@@ -1,5 +1,5 @@
 #include "globalitems.h"
-
+#include "Shader.h"
 
 
 // Main game Camera
@@ -27,11 +27,12 @@ private:
 	// NOTE: projection Matrix is setup once
 	glm::mat4 projection;
 
-	// Shaders Uniforms
+
+	// Shaders Uniforms References
 private:
-	int u_view;
-	int u_pos;
-	int u_projection;
+	int& r_u_view;
+	int& r_u_pos;
+	int& r_u_projection;
 
 	// Update Members
 private:
@@ -45,6 +46,6 @@ private:
 
 public:
 	const void Update();
-	Camera(Window* win, unsigned int& shader, int win_size[]);
+	Camera(Window* win, Shader& shader, int win_size[]);
 
 };

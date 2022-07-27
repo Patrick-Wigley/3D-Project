@@ -1,5 +1,7 @@
 #pragma once
 #include "GlobalItems.h"
+#include "Shader.h"
+
 
 // For now this is just for an instance/object to use containing its own data regarding vertices etc
 
@@ -38,17 +40,26 @@ const unsigned int INDICES[]
 class Obj
 {
 private:
-	unsigned int vao;
-	unsigned int vertexBuffer;
+	unsigned int vbo;
 	unsigned int ibo;
 	
 	
 	// Potentially Protected fields if this becomes a super-class:
 	void AttachBufferData();
 	
+private:
+	glm::vec3 pos;
+	float rotation;
+
+
+
+private:
+	glm::mat4 model_matrix;
+
 
 public:
 	Obj();
 	
+	void update(Shader&);
 	void Bind();
 };
