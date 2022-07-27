@@ -80,7 +80,7 @@ void Camera::KeyUpdate()
 		this->pos[X] -= cos(yaw + 1.6f) / 15;
 		this->pos[Z] -= sin(yaw + 1.6f) / 15;
 	}
-	
+
 };
 
 
