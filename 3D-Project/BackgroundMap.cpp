@@ -78,15 +78,15 @@ const static unsigned int create_vb()
 const static unsigned int create_tb()
 {
    
-    std::string PREFIX = "Assets/CubeMaps/";
+    std::string PREFIX = "3D-Project\\Assets\\CubeMaps\\";
     const std::vector<std::string> FILES
     {
-        "Assets/CubeMaps/right.png",
-        "Assets/CubeMaps/left.png",
-        "Assets/CubeMaps/top.png",
-        "Assets/CubeMaps/bottom.png",
-        "Assets/CubeMaps/front.png",
-        "Assets/CubeMaps/back.png"
+        PREFIX + "right.png",
+        PREFIX + "left.png",
+        PREFIX + "top.png",
+        PREFIX + "bottom.png",
+        PREFIX + "front.png",
+        PREFIX + "back.png"
     };
     
     unsigned int buffer;
