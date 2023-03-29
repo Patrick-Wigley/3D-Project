@@ -3,6 +3,7 @@
 #include <glm\glm.hpp>
 #include <glm\gtc\type_ptr.hpp>
 
+
 // Needed for file reading
 #include <string>
 #include <sstream>
@@ -14,6 +15,7 @@
 
 
 typedef GLFWwindow Window;
+
 
 
 //struct GLWINDOW_PROPERTIES
