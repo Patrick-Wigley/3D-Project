@@ -7,8 +7,8 @@
 #include "stb_image.h"
 
 // Prefix to texture files
-const static std::string TEXTURE_FOLDER = "Assets\\Textures\\";
-const static std::string MAPS_FOLDER = "Assets\\Maps\\";
+const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
+const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
 // #-#-#-#- MODELS -#-#-#-#
 
