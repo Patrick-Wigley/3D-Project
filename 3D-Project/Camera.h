@@ -1,6 +1,7 @@
 #include "globalitems.h"
-#include "Shader.h"
+//#include "Shader.h"
 
+const float DEFAULT_JUMP_SPEED = 1.2f;
 
 // Main game Camera
 class Camera
@@ -18,7 +19,12 @@ private:
 	// Adjustable factors
 private:
 	float movement_speed = 1;
+	float jump_speed = DEFAULT_JUMP_SPEED;
 
+
+	// States
+private:
+	bool jumping = false;
 
 	// Matrices
 private:
@@ -27,17 +33,23 @@ private:
 	// NOTE: projection Matrix is setup once
 	glm::mat4 projection;
 
+	// Getters for matrices
+public:
+	const glm::mat4* GetRotationMatrix = &this->rotation;
+	const glm::mat4* GetProjectionMatrix = &this->projection;
+	const glm::mat4* GetView = &this->view;
 
 	// Shaders Uniforms References
 private:
-	int& r_u_view;
-	int& r_u_pos;
-	int& r_u_projection;
+	//int& r_u_view;
+	//int& r_u_pos;
+	//int& r_u_projection;
 
 	// Update Members
 private:
 	void DirectionUpdate();
 	void KeyUpdate();
+	void JumpUpdate(float current_terrain_y);
 
 	// Ptr to window instance
 private:
@@ -45,7 +57,13 @@ private:
 
 
 public:
-	const void Update();
-	Camera(Window* win, Shader& shader, int win_size[]);
+	const void Update(float terrain_pos_height);
+	Camera(Window* win, int win_size[]);
 
+
+private:
+	glm::vec3 camDir;
+public:
+	float* get_pos = this->pos;
+	glm::vec3* Get_Rotation = &this->camDir;
 };
