@@ -41,10 +41,8 @@ private:
 
 	/* CONST Models & Terrains */
 private:
-	Model_Chest		model_chest;
-	Model_BinGus	model_bin_gus;
-	Model_NappyGuy	model_nappy_guy;
-
+	Model_Global model_nappy_guy;
+	Model_Global model_energy_ball;
 	Terrain model_terrain;
 
 

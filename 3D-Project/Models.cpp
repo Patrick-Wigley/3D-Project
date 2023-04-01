@@ -420,16 +420,13 @@ void Model::SetUp(std::string FileName)
 // MUST BE LOADED AT START
 Model_NappyGuy::Model_NappyGuy()
 {
-	//this->SetUp("NappyGuy");
 }
 
-Model_BinGus::Model_BinGus()
-{	
-}
-
-Model_Chest::Model_Chest()
+Model_Global::Model_Global()
 {
 }
+
+
 
 
 

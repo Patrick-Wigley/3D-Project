@@ -89,26 +89,16 @@ public:
 	RawTexture&      GetTextureContent = this->texture_content;
 };
 
-class Model_BinGus : public Model
+// This Model_Global class is intend to be used for different models. Rather than having a unique class for each model
+class Model_Global : public Model
 {
 public:
-	Model_BinGus();
-
+	Model_Global();
 	// Getters - (References)
 	RawModelContent& GetModelContent = this->model_content;
 	RawTexture& GetTextureContent = this->texture_content;
 };
 
-
-class Model_Chest : public Model
-{
-public:
-	Model_Chest();
-
-	// Getters - (References)
-	RawModelContent& GetModelContent = this->model_content;
-	RawTexture& GetTextureContent = this->texture_content;
-};
 
 
 

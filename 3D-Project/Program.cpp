@@ -1,14 +1,10 @@
 #include "Program.h"
 
 
-//Model_NappyGuy nappy_guy;
-
 void Program::MainLoop()
 {
     // Entities
     StaticObj square({ 0.0f,  50.0f,  0.0f }, &model_nappy_guy);
-    StaticObj square2({ 0.0f, 50.0f, 4.0f },  &model_bin_gus);
-    StaticObj square3({ 0.0f, 50.0f, 9.0f },  &model_chest);
 
 
     /* Terrains */
@@ -67,8 +63,6 @@ void Program::MainLoop()
         main_shader.UpdateCameraUniforms(&camera);
 
         square.Draw(main_shader, camera);
-        square2.Draw(main_shader, camera);
-        square3.Draw(main_shader, camera);
 
 
 
@@ -89,7 +83,7 @@ void Program::MainLoop()
             BulletObj bullet(
                 {*camera.get_pos, camera.get_pos[1], camera.get_pos[2] },
                 *camera.Get_Rotation,
-                &model_nappy_guy
+                &model_energy_ball
             );
 
             bullets.push_back(bullet);
@@ -157,11 +151,9 @@ int Program::SetUp()
 int Program::ModelsSetUp()
 {
     // CONSTANT MODELS - (Objects will use these skins if assigned)   
-
     this->model_nappy_guy.SetUp("NappyGuy");
-    this->model_bin_gus.SetUp("BinGus");
-    this->model_chest.SetUp("chest");
-   
+    this->model_energy_ball.SetUp("EnergyBall");
+
     ///* Terrains */
     this->model_terrain.SetUp();
    
@@ -237,7 +229,7 @@ Program::Program(Window* window, int DEFAULT_WINDOW_SIZE[])
     : window(window),
     // Have to setup window & stuff before doing these:
     main_shader(Shader()), terrain_shader(Shader()),
-      camera(Camera(window, DEFAULT_WINDOW_SIZE))
+    camera(Camera(window, DEFAULT_WINDOW_SIZE)), window_size(DEFAULT_WINDOW_SIZE)
 {
 
 }
