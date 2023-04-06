@@ -1,6 +1,8 @@
 #include "Meshes.h"
 
 
+
+
 const enum class FILE_TYPES
 {
 	OBJ=1, X=2, MTL=3
@@ -51,7 +53,6 @@ std::vector<float> OBJ_append_content(std::string line)
 
 
 		line_.erase(0, space_pos+1);
-		int k = 1;
 	}
 		
 	return list;
@@ -418,12 +419,9 @@ void Model::SetUp(std::string FileName)
 }
 
 // MUST BE LOADED AT START
-Model_NappyGuy::Model_NappyGuy()
-{
-}
-
 Model_Global::Model_Global()
 {
+
 }
 
 

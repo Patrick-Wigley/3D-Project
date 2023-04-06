@@ -34,14 +34,14 @@ in vec2 uv;
 
 // Texture
 uniform sampler2D u_texture;
+uniform bool u_isTextured;
 
-//uniform float u_offset;
 
 void main()                               
 {
-    
     // ATM Everything is textured - (add boolean to determine)
     colour = texture(u_texture, uv);
+    
 
     //colour = vec4(.1, .5, .3, 1.0) * pos;
     //colour = vec4(0,0,0, 1.0);

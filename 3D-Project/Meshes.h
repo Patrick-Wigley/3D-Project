@@ -80,14 +80,7 @@ protected:
 
 
 // Models - SHOULD BE LOADED IN ONCE AT START
-class Model_NappyGuy : public Model
-{
-public:
-	Model_NappyGuy();
-	// Getters - (References)
-	RawModelContent& GetModelContent   = this->model_content;
-	RawTexture&      GetTextureContent = this->texture_content;
-};
+
 
 // This Model_Global class is intend to be used for different models. Rather than having a unique class for each model
 class Model_Global : public Model
@@ -98,6 +91,7 @@ public:
 	RawModelContent& GetModelContent = this->model_content;
 	RawTexture& GetTextureContent = this->texture_content;
 };
+
 
 
 

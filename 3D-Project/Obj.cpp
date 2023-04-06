@@ -82,6 +82,8 @@ void Obj::AttachBufferData()
 	// This will be optimised as some draws will be using the same texture
 	//glBindTexture(GL_TEXTURE_2D, this->p_model->texture_content.model_texture);
 	
+	// Initially unbind previously used texture
+	glBindTexture(GL_TEXTURE_2D, 0);
 	// Loop throught models texture(s) & Activate index location, Bind texture
 	for (unsigned int i = 0; i < this->p_model->texture_content.textures_count; i++)
 	{
