@@ -129,7 +129,7 @@ const static unsigned int create_tb()
 
 
 SkyMap::SkyMap() 
-    : shader(Shader()), r_shader(shader.shader)
+    : shader(CubeMapShader()), r_shader(shader.shader)
 {
 }
 

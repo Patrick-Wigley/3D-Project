@@ -30,8 +30,8 @@ private:
 	// Predominant VAO
 	unsigned int vao;
 	// Predominant Shader
-	Shader main_shader;
-	Shader terrain_shader;
+	ObjectShader main_shader;
+	TerrainShader terrain_shader;
 
 
 	/* Entity Arrays */

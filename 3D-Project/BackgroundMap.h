@@ -17,7 +17,7 @@ private:
 	void Update();
 
 
-	Shader shader;
+	CubeMapShader shader;
 	unsigned int& r_shader;
 
 	// Uniforms

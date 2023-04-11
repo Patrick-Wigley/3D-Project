@@ -40,7 +40,11 @@ uniform bool u_isTextured;
 void main()                               
 {
     // ATM Everything is textured - (add boolean to determine)
-    colour = texture(u_texture, uv);
+    if (u_isTextured)
+        colour = texture(u_texture, uv);
+    else 
+        colour = vec4(0, 0, .1 * fract(sin(dot(pos.xy, vec2(12.9898, 78.233)))), 1.0);
+    
     
 
     //colour = vec4(.1, .5, .3, 1.0) * pos;
