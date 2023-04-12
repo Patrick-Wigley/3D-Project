@@ -27,7 +27,7 @@ Obj::Obj(float inital_pos[3], Model* model
 	vertices_count	= (*model).indices_count;
 		
 };
-
+// changes in PW BRANCH
 
 
 void Obj::Update(Shader& shader, Camera& camera)
