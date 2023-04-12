@@ -1,9 +1,8 @@
 #pragma once
 #include "GlobalItems.h"
+
 #include "Shader.h"
-
-
-#include "Meshes.h"
+#include "Models.h"
 
 
 // For now this is just for an instance/object to use containing its own data regarding vertices etc
@@ -13,11 +12,15 @@ const static int TEXTURE_COORDINATE_SIZE = 2;
 
 
 
+
+
 class Obj
 {
 private:
 	// Pointer to a model with populated content
-	Model* p_model;
+	Model_Own* p_model;
+	Model* pAssimpModel;
+
 
 private:
 	int indices_count;
@@ -41,7 +44,7 @@ protected:
 
 
 public:
-	Obj(float inital_pos[3], Model* model
+	Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel=nullptr
 	//	const std::vector<float> uvs
 	);
 	
@@ -59,7 +62,7 @@ class StaticObj : public Obj
 {
 public:
 	StaticObj(std::vector<float> inital_pos, 
-		Model* model, bool use_index_buffer = false);
+		Model_Own* model, bool use_index_buffer = false);
 
 };
 
@@ -68,7 +71,7 @@ class BulletObj : public Obj
 {
 public:
 	BulletObj(std::vector<float> inital_pos, glm::vec3 path, 
-		Model* model);
+		Model_Own* model);
 
 	// "Sub" prefix stands for method in this sub-class.
 	void Sub_Update();

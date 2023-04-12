@@ -5,6 +5,8 @@ void Program::MainLoop()
 {
     // Entities
     StaticObj square({ 0.0f,  50.0f,  0.0f }, &model_nappy_guy);
+    
+    
 
 
     /* Terrains */
@@ -154,12 +156,17 @@ int Program::ModelsSetUp()
     this->model_nappy_guy.SetUp("NappyGuy");
     this->model_energy_ball.SetUp("EnergyBall");
 
+    Model NappyGuy_Assimp;
+    NappyGuy_Assimp.LoadModel("NappyGuy.obj");
+
     ///* Terrains */
     this->model_terrain.SetUp();
-   
-    
+       
     return 0;
 }
+
+
+
 
 int Program::WindowSetUp()
 {

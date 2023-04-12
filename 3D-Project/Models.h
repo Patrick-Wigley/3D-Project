@@ -6,11 +6,93 @@
 
 #include "stb_image.h"
 
-// Prefix to texture files
+/* Constants */
+// Prefix to 'Assets/Textures'
 const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
+// Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
+const unsigned int NUM_BUFFERS = 4U;
+const enum class BUFFER_TYPE {
+	VERTEX=0, 
+	UV=1,
+	NORMAL=2,
+	INDEX=3, 
+};
+// BUFFER_TYPES are also organised in VAO buffer locations order
+typedef BUFFER_TYPE BUFFER_LOCATION;
+
+
+struct MeshEntry
+{
+	MeshEntry()
+		: NumIndices(0), BaseVertex(0), BaseIndex(0), MaterialIndex(NULL)
+	{}
+	unsigned int NumIndices;
+	unsigned int BaseVertex;
+	unsigned int BaseIndex;
+	unsigned int MaterialIndex;
+};
+
+// #-#-#-#- ASSIMP MODELS -#-#-#-#
+// Beginning changeover to full assimp usage - Delete when complete
+// Assimp usage
+class Model
+{	// Each model will now have it's own VAO. A mesh will contain its own buffer data which will be attached to its models VAO when drawing.
+public:
+	void LoadModel(const std::string& fileName);
+
+public:
+	unsigned int m_VerticesCount;
+	unsigned int m_IndicesCount;
+
+private:
+	bool InitialiseMeshesFromScene(const aiScene* pScene);
+	void SetCounts(const aiScene*);
+	
+	void ExtractMeshesData(const aiScene* pScene);
+	void ReserveArrays();
+	void InitialiseSingleMesh(const aiMesh* paiMesh);
+	void ExtractMaterialData(const aiScene* pScene);
+	void SetupBuffers();
+
+
+private:
+	//buffers ModelMeshes[] ??
+	unsigned int m_VAO;
+	GLuint m_Buffers[NUM_BUFFERS];
+	unsigned int* m_Textures;
+
+
+	// Arrays
+private:
+	//std::vector<aiMesh> m_aiMeshes;
+	std::vector<MeshEntry> m_Meshes;
+
+	std::vector<Vector3> m_Vertices;
+	std::vector<Vector3> m_Normals;
+	std::vector<Vector2> m_UVs;
+	std::vector<unsigned int> m_Indices;
+
+
+private:
+	std::string m_ObjFileName;
+
+
+	// Counts
+private:
+	
+
+
+	// Constructors
+public:
+	Model();
+};
+
+
+
 // #-#-#-#- MODELS -#-#-#-#
+
 
 // Content for a model
 struct RawModelContent
@@ -47,7 +129,8 @@ struct Buffers
 };
 
 /* PARENT CLASS FOR MODELS */
-class Model
+// Previously used Model Class
+class Model_Own
 {
 
 	// Protected Fields
@@ -61,7 +144,7 @@ public:
 	int vertices_count;
 	int indices_count;
 
-	~Model()
+	~Model_Own()
 	{
 		std::cout << "\n" << "[Object]: Deleting Model";
 	};
@@ -75,6 +158,9 @@ protected:
 		this->indices_count  = content.indices.size();
 	}
 	
+
+
+
 };
 
 
@@ -83,7 +169,7 @@ protected:
 
 
 // This Model_Global class is intend to be used for different models. Rather than having a unique class for each model
-class Model_Global : public Model
+class Model_Global : public Model_Own
 {
 public:
 	Model_Global();
@@ -91,7 +177,6 @@ public:
 	RawModelContent& GetModelContent = this->model_content;
 	RawTexture& GetTextureContent = this->texture_content;
 };
-
 
 
 
@@ -107,7 +192,7 @@ struct OBJ_Face_3D
 
 
 
-class Terrain : public Model
+class Terrain : public Model_Own
 {
 public:
 	Terrain();
@@ -142,6 +227,6 @@ const int MAX_RGB_VAL = (255 * 3);
 
 
 // Create terrain
-Model GenTerrain(Maps*, std::vector<glm::vec3> & y_values);
+Model_Own GenTerrain(Maps*, std::vector<glm::vec3> & y_values);
 void setup_buffers(Buffers& buffers, RawModelContent& model_content, RawTexture& texture_content);
 
