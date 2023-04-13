@@ -17,17 +17,17 @@ const static int TEXTURE_COORDINATE_SIZE = 2;
 class Obj
 {
 private:
-	// Pointer to a model with populated content
-	Model_Own* p_model;
 	Model* pAssimpModel;
 
 
-private:
+protected:
 	int indices_count;
 	int vertices_count;
 
+	// AttachBufferData for "Model_Own" 
+	void AttachBufferData_ModelOwn();
+
 private:
-	void AttachBufferData();
 	void Update(Shader&, Camera&);
 
 
@@ -44,7 +44,7 @@ protected:
 
 
 public:
-	Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel=nullptr
+	Obj(float inital_pos[3]//, Model_Own* model, Model* AssimpModel=nullptr
 	//	const std::vector<float> uvs
 	);
 	
@@ -54,21 +54,45 @@ public:
 
 
 
-
 // Inherenting from class 'Obj'
+// Objects Utilising Assimp Models - (StaticObj will need to be updated to use assimp models in future) - (Currently in process or Parallel-Changeover)
+class DynamicObj : public Obj
+{
+private:
+	Model* pModel;
+
+
+
+};
+
 
 /* Any model which is still in a fixed place */
 class StaticObj : public Obj
 {
+private:
+	// Pointer to a model with populated content
+	Model_Own* p_model;
+
+public:
+	void AttachBufferData();
+	void SubDraw(Shader& shader, Camera& camera);
+
 public:
 	StaticObj(std::vector<float> inital_pos, 
 		Model_Own* model, bool use_index_buffer = false);
-
 };
 
 
 class BulletObj : public Obj
 {
+private:
+	// Pointer to a model with populated content
+	Model_Own* p_model;
+
+public:
+	void AttachBufferData();
+	void SubDraw(Shader& shader, Camera& camera);
+
 public:
 	BulletObj(std::vector<float> inital_pos, glm::vec3 path, 
 		Model_Own* model);

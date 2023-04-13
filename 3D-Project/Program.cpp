@@ -57,14 +57,14 @@ void Program::MainLoop()
         // Terrain Shader Draw
         (terrain_shader).Bind();
         (terrain_shader).UpdateCameraUniforms(&camera);
-        terrain.Draw(terrain_shader, camera);
+        terrain.SubDraw(terrain_shader, camera);
 
 
         // Main Shader Draws
         main_shader.Bind();
         main_shader.UpdateCameraUniforms(&camera);
         main_shader.UpdateIsTexturedUniform(true);
-        square.Draw(main_shader, camera);
+        square.SubDraw(main_shader, camera);
 
 
 
@@ -72,7 +72,7 @@ void Program::MainLoop()
         for (unsigned int bullet = 0; bullet < bullets.size(); bullet++)
         {
             bullets[bullet].Sub_Update();
-            bullets[bullet].Draw(main_shader, camera);
+            bullets[bullet].SubDraw(main_shader, camera);
         }
 
 
