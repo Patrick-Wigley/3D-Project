@@ -5,6 +5,8 @@ void Program::MainLoop()
 {
     // Entities
     StaticObj square({ 0.0f,  50.0f,  0.0f }, &model_nappy_guy);
+    
+    
 
 
     /* Terrains */
@@ -61,12 +63,12 @@ void Program::MainLoop()
         // Main Shader Draws
         main_shader.Bind();
         main_shader.UpdateCameraUniforms(&camera);
-
+        main_shader.UpdateIsTexturedUniform(true);
         square.Draw(main_shader, camera);
 
 
 
-
+        main_shader.UpdateIsTexturedUniform(false);
         for (unsigned int bullet = 0; bullet < bullets.size(); bullet++)
         {
             bullets[bullet].Sub_Update();
@@ -133,7 +135,7 @@ int Program::SetUp()
     this->ModelsSetUp();
 
     /* Shaders */
-    main_shader.SetUp(SHADER_FOLDER_DIR + "main.glsl");
+    main_shader.ExtendedSetUp(SHADER_FOLDER_DIR + "main.glsl");
     terrain_shader.SetUp(SHADER_FOLDER_DIR + "Terrain.glsl");
     // Note this->CubeMap has its own shader
     
@@ -154,12 +156,17 @@ int Program::ModelsSetUp()
     this->model_nappy_guy.SetUp("NappyGuy");
     this->model_energy_ball.SetUp("EnergyBall");
 
+    Model NappyGuy_Assimp;
+    NappyGuy_Assimp.LoadModel("NappyGuy.obj");
+
     ///* Terrains */
     this->model_terrain.SetUp();
-   
-    
+       
     return 0;
 }
+
+
+
 
 int Program::WindowSetUp()
 {
@@ -228,7 +235,7 @@ void Program::QueryErrors()
 Program::Program(Window* window, int DEFAULT_WINDOW_SIZE[])
     : window(window),
     // Have to setup window & stuff before doing these:
-    main_shader(Shader()), terrain_shader(Shader()),
+    main_shader(ObjectShader()), terrain_shader(TerrainShader()),
     camera(Camera(window, DEFAULT_WINDOW_SIZE)), window_size(DEFAULT_WINDOW_SIZE)
 {
 

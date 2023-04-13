@@ -6,6 +6,8 @@ const std::string SHADER_FOLDER_DIR = "3D-Project\\Shaders\\";
 
 class Shader
 {
+
+
 public:
 	unsigned int shader;
 
@@ -35,3 +37,42 @@ public:
 	void UpdateCameraUniforms(Camera* camera);
 };
 
+
+
+// NOTE: If wish to extend properties such as uniforms of other shaders, create sub class as shown below:
+// This is the "MainShader". This has extended properties
+class ObjectShader : public Shader
+{
+	
+
+	// Extended Properties
+private:
+	int u_isTextured;
+
+
+
+public:
+	void ExtendedSetUp(std::string file_name);
+	void UpdateIsTexturedUniform(bool);
+
+
+	// Constructors
+public:
+	ObjectShader();
+
+};
+
+
+
+class TerrainShader : public Shader
+{
+public:
+	TerrainShader();
+};
+
+
+class CubeMapShader : public Shader
+{
+public:
+	CubeMapShader();
+};

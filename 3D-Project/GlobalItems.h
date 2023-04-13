@@ -1,3 +1,10 @@
+/* Includes  */
+// Assimp Model Reader
+#include <Assimp/Importer.hpp>
+#include <Assimp/scene.h>
+#include <Assimp/postprocess.h>
+
+// Graphics Libraries
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 #include <glm\glm.hpp>
@@ -15,6 +22,21 @@
 
 
 typedef GLFWwindow Window;
+
+typedef glm::vec3 Vector3;
+typedef glm::vec2 Vector2;
+
+
+/* Macros */ 
+#define ARRAY_COUNT(arr, type) (sizeof(arr)/sizeof(type))
+
+#define ENUM_UINT(e) ((unsigned int)e)
+
+
+// Assimp
+#define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)
+
+
 
 
 

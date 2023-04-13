@@ -166,7 +166,7 @@ Camera::Camera(Window* window, int window_size[])
 	// NOTE: projection Matrix is setup once
 
 {
-	projection = glm::perspective(glm::radians(60.0f), (float)(window_size[0] / window_size[1]), 0.1f, 100.0f);
+	projection = glm::perspective(glm::radians(60.0f), (float)(window_size[0] / window_size[1]), 0.1f, 500.0f);
 	//std::cout << glm::to_string(projection) << std::endl;
 	view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
 	

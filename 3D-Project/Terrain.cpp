@@ -1,4 +1,4 @@
-#include "Meshes.h"
+#include "Models.h"
 #include "Shader.h"
 
 const int X = 0;
@@ -27,7 +27,7 @@ void Terrain::SetUp()
 	Maps blend_map = read_map("BlendMap_" + MAP + ".png");
 
 	// Terrain is written into code - (content not derived from external source)
-	Model model = GenTerrain(&height_map, y_values);
+	Model_Own model = GenTerrain(&height_map, y_values);
 
 	this->model_content = model.model_content;
 
@@ -99,7 +99,7 @@ float barycentric(std::vector<glm::vec3>& triangle_points, float* pos)
 
 
 // Terrain
-Model GenTerrain(Maps* height_map, std::vector<glm::vec3>& vertices)
+Model_Own GenTerrain(Maps* height_map, std::vector<glm::vec3>& vertices)
 {
 	
 	int index = 0;
@@ -110,7 +110,7 @@ Model GenTerrain(Maps* height_map, std::vector<glm::vec3>& vertices)
 
 
 	//std::vector<glm::vec3> vertices;
-	Model model;
+	Model_Own model;
 
 
 

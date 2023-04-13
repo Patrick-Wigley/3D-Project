@@ -1,4 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
+
+
 #include "Program.h"
 
 
@@ -63,7 +65,8 @@ int WindowSetUp()
 
 int main(void)
 {
-    
+ 
+
     /* Window */
     if (!WindowSetUp())
         return -1;

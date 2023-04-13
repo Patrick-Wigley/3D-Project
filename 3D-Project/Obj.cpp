@@ -5,12 +5,12 @@
 
 
 
-Obj::Obj(float inital_pos[3], Model* model
+Obj::Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel
 	//const std::vector<float> uvs					
 )
 	: rotation(0.0f),
 	pos(glm::vec3(inital_pos[0], inital_pos[1], inital_pos[2])),
-	p_model(model)
+	p_model(model), pAssimpModel(AssimpModel)
 
 	//mesh(setup_dyn_mesh(vertices, indices))
 
@@ -18,6 +18,8 @@ Obj::Obj(float inital_pos[3], Model* model
 	// tbo(model.texture_content.buffer)
 
 {
+
+	// old
 	std::vector<float>&vertices			= (*model).model_content.vertices;
 	std::vector<unsigned int>&indices	= (*model).model_content.indices;
 	// continue here
@@ -25,7 +27,11 @@ Obj::Obj(float inital_pos[3], Model* model
 
 	indices_count	= (*model).vertices_count;
 	vertices_count	= (*model).indices_count;
-		
+
+	// new - Assimp Model
+	/*indices_count = (*AssimpModel).m_IndicesCount;
+	vertices_count = (*AssimpModel).m_VerticesCount;*/
+
 };
 
 
@@ -111,7 +117,7 @@ void Obj::AttachBufferData()
 
 
 StaticObj::StaticObj(std::vector<float> inital_pos, 
-	Model* model, bool use_index_buffer)
+	Model_Own* model, bool use_index_buffer)
 	: Obj(inital_pos.data(), model)
 {
 	model_matrix = glm::translate(glm::mat4(1), this->pos);
@@ -124,7 +130,7 @@ StaticObj::StaticObj(std::vector<float> inital_pos,
 
 
 BulletObj::BulletObj(std::vector<float> inital_pos, glm::vec3 path, 
-	Model* model)
+	Model_Own* model)
 	: Obj(inital_pos.data(), model),
 	path_vec(path)
 {

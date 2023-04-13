@@ -196,3 +196,41 @@ void Shader::UpdateUniforms()
 
 }
 
+
+
+
+// Shader Sub-Classes
+ObjectShader::ObjectShader()
+{
+}
+
+void ObjectShader::ExtendedSetUp(std::string file_name)
+{
+    this->SetUp(file_name);
+    
+    // Extended uniforms
+    this->u_isTextured = glGetUniformLocation(shader, "u_isTextured");
+    // Default to True
+    glUniform1i(this->u_isTextured, true);
+
+    printf("\n%s", "Hello");
+}
+
+
+void ObjectShader::UpdateIsTexturedUniform(bool isTextured)
+{
+    glUniform1i(this->u_isTextured, isTextured);
+}
+
+
+TerrainShader::TerrainShader()
+{
+}
+CubeMapShader::CubeMapShader()
+{
+}
+
+
+
+
+
