@@ -5,7 +5,7 @@
 
 
 
-Obj::Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel=nullptr
+Obj::Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel
 	//const std::vector<float> uvs					
 )
 	: rotation(0.0f),
