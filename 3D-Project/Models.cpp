@@ -449,7 +449,7 @@ void Model::LoadModel(const std::string& fileName)
 	{
 		this->m_ObjFileName = fileName;
 		this->InitialiseMeshesFromScene(pScene);
-
+		this->SetupBuffers();
 	}
 
 
@@ -521,10 +521,11 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 
 void Model::ExtractMaterialData(const aiScene* pScene)
 {
-
+	// Set an m_Materials maybe 
+	// Currently, a texture-slot is reserved for each MATERIAL - (If a material has no texture, a slot will be resevered anyway, at the momment)
 	this->m_Textures = (unsigned int*)malloc(sizeof(unsigned int) * pScene->mNumMaterials);
-	//std::string::size_type SlashIndex = File
-
+	this->m_MaterialsCount = pScene->mNumMaterials;
+	
 
 
 	// Iterate through all identified materials
@@ -590,6 +591,23 @@ void Model::ReserveArrays()
 	this->m_Indices.reserve(this->m_IndicesCount);
 
 }
+
+
+
+void Model::AttachModelsVAO()
+{
+	glBindVertexArray(this->m_VAO);
+}
+void Model::AttachModelsTextures()
+{
+	// Bind Textures
+	for (unsigned int i = 0; i < this->m_MaterialsCount; i++)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->m_Textures[i]);
+	}
+}
+
 
 Model::Model()
 	:

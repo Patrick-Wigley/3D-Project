@@ -45,6 +45,8 @@ private:
 	Model_Global model_energy_ball;
 	Terrain model_terrain;
 
+	Model m_ModelEntity; // First test model
+
 
 	/* Main Functions */
 public:

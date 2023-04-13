@@ -56,13 +56,17 @@ private:
 	void ExtractMaterialData(const aiScene* pScene);
 	void SetupBuffers();
 
+public:
+	void AttachModelsVAO();
+	void AttachModelsTextures();
 
+	// Currently DataStructure Model holds its own VAO & buffers data in array "m_Buffers".
 private:
 	//buffers ModelMeshes[] ??
 	unsigned int m_VAO;
 	GLuint m_Buffers[NUM_BUFFERS];
 	unsigned int* m_Textures;
-
+	unsigned int m_MaterialsCount;
 
 	// Arrays
 private:

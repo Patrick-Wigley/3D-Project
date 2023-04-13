@@ -5,26 +5,10 @@
 
 
 
-Obj::Obj(float inital_pos[3]
-	//const std::vector<float> uvs					
-)
+Obj::Obj(float inital_pos[3])
 	: rotation(0.0f),
 	pos(glm::vec3(inital_pos[0], inital_pos[1], inital_pos[2]))
-	
-
-	//mesh(setup_dyn_mesh(vertices, indices))
-
-	// Buffer References
-	// tbo(model.texture_content.buffer)
-
-{
-
-
-	// new - Assimp Model
-	/*indices_count = (*AssimpModel).m_IndicesCount;
-	vertices_count = (*AssimpModel).m_VerticesCount;*/
-
-};
+{};
 
 
 // Rename to "AttachUniformsData"
@@ -59,6 +43,31 @@ void Obj::Draw(Shader& shader, Camera& camera)
 }
 
 
+
+
+/* NEW Model USAGE*/
+DynamicObj::DynamicObj(std::vector<float> inital_pos,
+	Model* model, bool use_index_buffer)
+	:
+		Obj(inital_pos.data()), pModel(model)
+{
+	this->vertices_count = model->m_VerticesCount;
+	this->indices_count = model->m_IndicesCount;
+	this->use_index_buffer = use_index_buffer;
+
+
+	this->model_matrix = glm::translate(glm::mat4(1), this->pos);
+	this->model_matrix = glm::rotate(model_matrix, glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
+}
+
+
+void DynamicObj::SubDraw(Shader& shader, Camera& camera)
+{
+	// Currently attaching vao for each object draw-call - (This will be optimised by grouping entities with same model together so this will only have to be done once per model).
+	this->pModel->AttachModelsVAO();
+	this->pModel->AttachModelsTextures();
+	this->Draw(shader, camera);
+}
 
 
 

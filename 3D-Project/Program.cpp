@@ -3,14 +3,15 @@
 
 void Program::MainLoop()
 {
+    /* Old Model_Own usage */ 
     // Entities
     StaticObj square({ 0.0f,  50.0f,  0.0f }, &model_nappy_guy);
-    
-    
 
-
-    /* Terrains */
+    // Terrains
     StaticObj terrain({ -0.0f, -0.0, -0.0f }, &model_terrain, true);
+
+    /* New Model usage */
+    DynamicObj entity({ 5.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
 
 
     std::vector<BulletObj> bullets{};
@@ -48,7 +49,7 @@ void Program::MainLoop()
         // Cubemap uses own vao & shader inside its class making it abit of an anomly - (SORT OUT AT SOME POINT)
         cubeMap.Draw(camera.GetRotationMatrix, camera.GetProjectionMatrix);
 
-
+        
         // Main VAO Draws
         glBindVertexArray(vao);
 
@@ -97,6 +98,11 @@ void Program::MainLoop()
         }
 
 
+        
+        // Assimp Model VAO Draw Calls
+        main_shader.UpdateIsTexturedUniform(true);
+        entity.SubDraw(main_shader, camera);
+
 
 
        // QueryErrors();
@@ -116,20 +122,19 @@ void Program::MainLoop()
 
 
  /* ############ PROGRAM SETUP ############### */
-
 int Program::SetUp()
 {
     /* Window Size - (Width & Height) */
 	this->window_size = (int*)malloc(sizeof(int) * 2);    
     glfwGetWindowSize(this->window, &window_size[0], &window_size[1]);
 
+
     /* Skymap */
+    // Uses it's own VAO
     this->cubeMap.SetUp();
 
 
-    /* Predominant VAO */
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+   
 
     /* Models Setup */
     this->ModelsSetUp();
@@ -152,16 +157,21 @@ int Program::SetUp()
 
 int Program::ModelsSetUp()
 {
+    /* Predominant VAO */
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
     // CONSTANT MODELS - (Objects will use these skins if assigned)   
     this->model_nappy_guy.SetUp("NappyGuy");
     this->model_energy_ball.SetUp("EnergyBall");
 
-    Model NappyGuy_Assimp;
-    NappyGuy_Assimp.LoadModel("NappyGuy.obj");
-
     ///* Terrains */
     this->model_terrain.SetUp();
-       
+
+
+
+    // These use their own VAO
+    m_ModelEntity.LoadModel("NappyGuy.obj");
+
     return 0;
 }
 

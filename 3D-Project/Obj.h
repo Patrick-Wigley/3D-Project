@@ -24,8 +24,6 @@ protected:
 	int indices_count;
 	int vertices_count;
 
-	// AttachBufferData for "Model_Own" 
-	void AttachBufferData_ModelOwn();
 
 private:
 	void Update(Shader&, Camera&);
@@ -61,6 +59,13 @@ class DynamicObj : public Obj
 private:
 	Model* pModel;
 
+
+public:
+	void SubDraw(Shader& shader, Camera& camera);
+
+public:
+	DynamicObj(std::vector<float> inital_pos,
+		Model* model, bool use_index_buffer = false);
 
 
 };
