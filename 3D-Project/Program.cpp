@@ -12,7 +12,7 @@ void Program::MainLoop()
 
     /* New Model usage */
     DynamicObj entity({ 5.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
-
+    DynamicObj entity2({ 7.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
 
     std::vector<BulletObj> bullets{};
 
@@ -49,22 +49,20 @@ void Program::MainLoop()
         // Cubemap uses own vao & shader inside its class making it abit of an anomly - (SORT OUT AT SOME POINT)
         cubeMap.Draw(camera.GetRotationMatrix, camera.GetProjectionMatrix);
 
-        
-        // Main VAO Draws
-        glBindVertexArray(vao);
-
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE
-        // Terrain Shader Draw
-        (terrain_shader).Bind();
-        (terrain_shader).UpdateCameraUniforms(&camera);
-        terrain.SubDraw(terrain_shader, camera);
-
 
         // Main Shader Draws
         main_shader.Bind();
         main_shader.UpdateCameraUniforms(&camera);
         main_shader.UpdateIsTexturedUniform(true);
+
+        // Assimp Model VAO Draw Calls
+        entity.SubDraw(main_shader, camera);
+        entity2.SubDraw(main_shader, camera);
+
+        
+        // Main VAO Draws
+        glBindVertexArray(vao);
+       
         square.SubDraw(main_shader, camera);
 
 
@@ -75,6 +73,13 @@ void Program::MainLoop()
             bullets[bullet].Sub_Update();
             bullets[bullet].SubDraw(main_shader, camera);
         }
+
+        // Terrain Shader Draw
+        (terrain_shader).Bind();
+        (terrain_shader).UpdateCameraUniforms(&camera);
+        terrain.SubDraw(terrain_shader, camera);
+
+
 
 
 
@@ -99,11 +104,7 @@ void Program::MainLoop()
 
 
         
-        // Assimp Model VAO Draw Calls
-        main_shader.UpdateIsTexturedUniform(true);
-        entity.SubDraw(main_shader, camera);
-
-
+   
 
        // QueryErrors();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -157,6 +158,7 @@ int Program::SetUp()
 
 int Program::ModelsSetUp()
 {
+    m_ModelEntity.LoadModel("NappyGuy.obj");
     /* Predominant VAO */
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -170,7 +172,6 @@ int Program::ModelsSetUp()
 
 
     // These use their own VAO
-    m_ModelEntity.LoadModel("NappyGuy.obj");
 
     return 0;
 }

@@ -33,7 +33,7 @@ void Obj::Update(Shader& shader, Camera& camera)
 
 void Obj::Draw(Shader& shader, Camera& camera)
 {
-	
+	// Currently used for "Model_Own" entities
 	this->Update(shader, camera);
 
 	if (!this->use_index_buffer)
@@ -65,8 +65,24 @@ void DynamicObj::SubDraw(Shader& shader, Camera& camera)
 {
 	// Currently attaching vao for each object draw-call - (This will be optimised by grouping entities with same model together so this will only have to be done once per model).
 	this->pModel->AttachModelsVAO();
-	this->pModel->AttachModelsTextures();
-	this->Draw(shader, camera);
+	
+	// This Content will be best in a parent class member once fully changed over to Assimp Model usage
+	this->Update(shader, camera);
+
+	// Draw call for EACH MESH in model
+	for (unsigned int i = 0; i < this->pModel->m_MeshesCount; i++)
+	{
+		MeshEntry& meshData = this->pModel->GetMeshIndex(i);
+		this->pModel->AttachMaterialsTextures(meshData.MaterialIndex);
+		glDrawElementsBaseVertex(
+			GL_TRIANGLES, 
+			meshData.NumIndices, 
+			GL_UNSIGNED_INT, 
+			(void*)(sizeof(unsigned int) * meshData.BaseIndex),
+			meshData.BaseVertex
+		);	
+	}
+
 }
 
 
@@ -134,12 +150,12 @@ void BulletObj::AttachBufferData()
 	//glBindTexture(GL_TEXTURE_2D, this->p_model->texture_content.model_texture);
 
 	// Initially unbind previously used texture
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 	// Loop throught models texture(s) & Activate index location, Bind texture
 	for (unsigned int i = 0; i < this->p_model->texture_content.textures_count; i++)
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
-		glBindTexture(GL_TEXTURE_2D, this->p_model->texture_content.model_textures[i]);
+		//glBindTexture(GL_TEXTURE_2D, this->p_model->texture_content.model_textures[i]);
 	}
 
 

@@ -1,5 +1,9 @@
 #include "Models.h"
 
+// Vars utilised globally in heap
+static unsigned int TotalLoadedTextures = 0;
+
+
 
 
 
@@ -7,7 +11,6 @@ const enum class FILE_TYPES
 {
 	OBJ = 1, X = 2, MTL = 3
 };
-
 
 
 
@@ -269,6 +272,7 @@ void gen_texture(unsigned int& location, std::string image_file_name, unsigned i
 
 		stbi_image_free(data);
 		std::cout << "\n[Texture] Successfully loaded: '" << image_file_name << "'";
+		TotalLoadedTextures++;
 	}
 	else
 	{
@@ -460,6 +464,7 @@ void Model::LoadModel(const std::string& fileName)
 bool Model::InitialiseMeshesFromScene(const aiScene* pScene)
 {
 	this->m_Meshes.resize(pScene->mNumMeshes);
+	this->m_MeshesCount = pScene->mNumMeshes;
 	this->SetCounts(pScene);
 	this->ReserveArrays();
 	this->ExtractMeshesData(pScene);
@@ -517,6 +522,7 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 			m_Indices.push_back(pFace.mIndices[j]);
 	}
 
+
 }
 
 void Model::ExtractMaterialData(const aiScene* pScene)
@@ -544,6 +550,7 @@ void Model::ExtractMaterialData(const aiScene* pScene)
 				std::string fullPath(TEXTURE_FOLDER + imgFileName);
 
 				gen_texture(this->m_Textures[i], fullPath, i);
+				this->m_TextureCount++;
 			}
 		}
 
@@ -598,14 +605,14 @@ void Model::AttachModelsVAO()
 {
 	glBindVertexArray(this->m_VAO);
 }
-void Model::AttachModelsTextures()
+void Model::AttachMaterialsTextures(unsigned int location = 0)
 {
-	// Bind Textures
-	for (unsigned int i = 0; i < this->m_MaterialsCount; i++)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, this->m_Textures[i]);
-	}
+	// With mutlitple textures: For loop for each texture below?
+	// Activate Texture Slot
+	// For now, only binding one texture per model
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->m_Textures[location]);
 }
 
 

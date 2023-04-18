@@ -25,7 +25,7 @@ protected:
 	int vertices_count;
 
 
-private:
+protected:
 	void Update(Shader&, Camera&);
 
 

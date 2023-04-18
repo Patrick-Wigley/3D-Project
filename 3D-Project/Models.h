@@ -45,6 +45,8 @@ public:
 public:
 	unsigned int m_VerticesCount;
 	unsigned int m_IndicesCount;
+	unsigned int m_MeshesCount;
+	unsigned int m_TextureCount;
 
 private:
 	bool InitialiseMeshesFromScene(const aiScene* pScene);
@@ -58,7 +60,7 @@ private:
 
 public:
 	void AttachModelsVAO();
-	void AttachModelsTextures();
+	void AttachMaterialsTextures(unsigned int location);
 
 	// Currently DataStructure Model holds its own VAO & buffers data in array "m_Buffers".
 private:
@@ -77,6 +79,10 @@ private:
 	std::vector<Vector3> m_Normals;
 	std::vector<Vector2> m_UVs;
 	std::vector<unsigned int> m_Indices;
+
+	// Getters
+public:
+	MeshEntry& GetMeshIndex(unsigned int index) { return this->m_Meshes[index]; };
 
 
 private:
