@@ -19,6 +19,8 @@
 // For debug outputs
 #include <iostream>
 
+#include <map>
+
 
 
 typedef GLFWwindow Window;
@@ -30,7 +32,7 @@ typedef glm::vec2 Vector2;
 /* Macros */ 
 #define ARRAY_COUNT(arr, type) (sizeof(arr)/sizeof(type))
 
-#define ENUM_UINT(e) ((unsigned int)e)
+#define ENUM_UINT(e) (static_cast<unsigned int>(e))
 
 
 // Assimp

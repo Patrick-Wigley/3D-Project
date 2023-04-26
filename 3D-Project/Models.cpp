@@ -5,8 +5,6 @@ static unsigned int TotalLoadedTextures = 0;
 
 
 
-
-
 const enum class FILE_TYPES
 {
 	OBJ = 1, X = 2, MTL = 3
@@ -430,9 +428,21 @@ Model_Global::Model_Global()
 
 // ALL ABOVE IS 1st PARTY WRITTEN
 /* ASSIMP MODEL LOADING CODE */
+const unsigned int DEFAULT_MODEL_SCALE = 1;
+
+
+void MeshWorldTranslation::UpdateMatrix(glm::vec3 pos, float rotation)
+{
+	// Currently just offers simple rotation & position update in world-space
+	this->m_Pos = pos;
+	this->m_Rotation = rotation;
+
+	this->m_ModelMatrix = glm::translate(glm::mat4(1), this->m_Pos);
+	this->m_ModelMatrix = glm::rotate(this->m_ModelMatrix, glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
+}
 
 // Main method for loading model data
-void Model::LoadModel(const std::string& fileName)
+void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_SCALE)
 {
 	// Generate models VAO
 	glGenVertexArrays(1, &this->m_VAO);
@@ -454,8 +464,8 @@ void Model::LoadModel(const std::string& fileName)
 		this->m_ObjFileName = fileName;
 		this->InitialiseMeshesFromScene(pScene);
 		this->SetupBuffers();
+		this->m_ModelScale = scale;
 	}
-
 
 	// Unbinding VAO
 	glBindVertexArray(0);
@@ -482,8 +492,8 @@ void Model::SetCounts(const aiScene* pScene)
 		m_Meshes[i].MaterialIndex = pScene->mMeshes[i]->mMaterialIndex;
 
 		// MESHES BASE index for Indices & Vertices - (EXAMPLE: 3rd meshes offset/base vertex = 1st + 2nd meshes vertice count and so on for n'th mesh...)
-		m_Meshes[i].BaseVertex = this->m_IndicesCount;
-		m_Meshes[i].BaseIndex = this->m_VerticesCount;
+		m_Meshes[i].BaseVertex = this->m_VerticesCount;
+		m_Meshes[i].BaseIndex = this->m_IndicesCount;
 
 		// Adds meshes vertices count onto total verticesCount each iteration
 		this->m_VerticesCount += pScene->mMeshes[i]->mNumVertices;
@@ -504,12 +514,18 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 {
 
 	const aiVector3D EmptyUV(0, 0, 0);
+	
+	aiBone bone;
+	bool hasBones;
+
+	
 
 	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++)
 	{
 		const aiVector3D& pPos = paiMesh->mVertices[i];
 		const aiVector3D& pNormal = paiMesh->mNormals[i];
 		const aiVector3D& pUV = paiMesh->HasTextureCoords(0) ? paiMesh->mTextureCoords[0][i] : EmptyUV;
+	
 
 		this->m_Vertices.push_back(Vector3(pPos.x, pPos.y, pPos.z));
 		this->m_Normals.push_back(Vector3(pNormal.x, pNormal.y, pNormal.z));
@@ -521,8 +537,45 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 		for (unsigned int j = 0; j < 3; j++)
 			m_Indices.push_back(pFace.mIndices[j]);
 	}
+	if (paiMesh->HasBones())
+		this->ExtractMeshBones(paiMesh);
+}
 
+void Model::ExtractMeshBones(const aiMesh* paiMesh)
+{
+	for (unsigned int i = 0; i < paiMesh->mNumBones; i++)
+	{
+		aiBone* paiBone = paiMesh->mBones[i];
+		this->InitialiseSingleMeshBone(paiBone);
+	}
+}
+int sharedVertex = -1;
+float total = 0;
 
+void Model::InitialiseSingleMeshBone(const aiBone* pBone)
+{
+	printf("\nBone Name: %s - Weights Count (%u) - Bone Weights: ", pBone->mName.C_Str(), pBone->mNumWeights);
+	for (unsigned int i = 0; i < pBone->mNumWeights; i++)
+	{
+		aiVertexWeight& weight = pBone->mWeights[i];
+		printf("\n[Vertex ID %u]: Influence (%f)", weight.mVertexId, weight.mWeight);
+		
+		//this->m_Bones[i].AddData()
+		if (sharedVertex != -1)
+		{
+			if (weight.mVertexId == sharedVertex)
+				total += weight.mWeight;
+		}
+		else 	
+			if (weight.mWeight < 1)
+			{
+				sharedVertex = weight.mVertexId;
+				total += weight.mWeight;
+
+			}
+
+	}
+	
 }
 
 void Model::ExtractMaterialData(const aiScene* pScene)
@@ -559,11 +612,14 @@ void Model::ExtractMaterialData(const aiScene* pScene)
 
 void Model::SetupBuffers()
 {
+	// VAO data
 	unsigned int& vbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::VERTEX)];
 	unsigned int& tbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::UV)];
 	unsigned int& nbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::NORMAL)];
+	unsigned int& bbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::BONES)];
+	
+	// Index data
 	unsigned int& ibo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::INDEX)];
-
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -583,10 +639,11 @@ void Model::SetupBuffers()
 	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::NORMAL));
 	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
 
+	glBindBuffer(GL_ARRAY_BUFFER, bbo);
+
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->m_Indices.size() * sizeof(unsigned int), this->m_Indices.data(), GL_DYNAMIC_DRAW);
-
 }
 
 
@@ -595,8 +652,8 @@ void Model::ReserveArrays()
 	this->m_Vertices.reserve(this->m_VerticesCount);
 	this->m_Normals.reserve(this->m_VerticesCount);
 	this->m_UVs.reserve(this->m_VerticesCount);
+	this->m_Bones.reserve(this->m_VerticesCount);
 	this->m_Indices.reserve(this->m_IndicesCount);
-
 }
 
 
@@ -616,10 +673,12 @@ void Model::AttachMaterialsTextures(unsigned int location = 0)
 }
 
 
+
 Model::Model()
 	:
 	m_VAO(NULL), m_Buffers(),
 	m_Meshes(std::vector<MeshEntry>()),
-	m_VerticesCount(0), m_IndicesCount(0)
-
+	m_VerticesCount(0), m_IndicesCount(0), m_MaterialsCount(0), m_MeshesCount(0), m_TextureCount(0), 
+	m_Textures(NULL), m_ModelScale(NULL)
+	
 {}

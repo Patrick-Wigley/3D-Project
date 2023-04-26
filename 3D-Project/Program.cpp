@@ -11,8 +11,8 @@ void Program::MainLoop()
     StaticObj terrain({ -0.0f, -0.0, -0.0f }, &model_terrain, true);
 
     /* New Model usage */
-    DynamicObj entity({ 5.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
-    DynamicObj entity2({ 7.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
+    DynamicObj entity({ 10.0f,  41.7f,  15.0f }, &m_ModelEntity, true);
+   // DynamicObj entity2({ 14.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
 
     std::vector<BulletObj> bullets{};
 
@@ -57,7 +57,7 @@ void Program::MainLoop()
 
         // Assimp Model VAO Draw Calls
         entity.SubDraw(main_shader, camera);
-        entity2.SubDraw(main_shader, camera);
+      //  entity2.SubDraw(main_shader, camera);
 
         
         // Main VAO Draws
@@ -158,7 +158,11 @@ int Program::SetUp()
 
 int Program::ModelsSetUp()
 {
-    m_ModelEntity.LoadModel("NappyGuy.obj");
+    /* Assimp Loaded Models */
+    // These models use their own VAO
+    m_ModelEntity.LoadModel("character1.fbx", .023);
+   // m_ModelCharacter.LoadModel("Medical worker.obj");
+    
     /* Predominant VAO */
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -171,7 +175,6 @@ int Program::ModelsSetUp()
 
 
 
-    // These use their own VAO
 
     return 0;
 }

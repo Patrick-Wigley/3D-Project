@@ -58,6 +58,7 @@ DynamicObj::DynamicObj(std::vector<float> inital_pos,
 
 	this->model_matrix = glm::translate(glm::mat4(1), this->pos);
 	this->model_matrix = glm::rotate(model_matrix, glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
+	this->model_matrix = glm::scale(model_matrix, pModel->GetModelScaleMatrix());
 }
 
 
@@ -85,6 +86,15 @@ void DynamicObj::SubDraw(Shader& shader, Camera& camera)
 
 }
 
+
+void DynamicObj::WorldSpaceUpdate()
+{
+	for (unsigned int i = 0; i < this->pModel->m_MeshesCount; i++)
+	{
+		MeshEntry& meshData = this->pModel->GetMeshIndex(i);
+		
+	}
+}
 
 
 

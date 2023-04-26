@@ -12,16 +12,59 @@ const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
 // Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
-const unsigned int NUM_BUFFERS = 4U;
+const unsigned int NUM_BUFFERS = 6U;
+const unsigned int NUM_OF_VBOS = 5U;
 const enum class BUFFER_TYPE {
 	VERTEX=0, 
 	UV=1,
 	NORMAL=2,
-	INDEX=3, 
+	BONES=3,
+	
+	INDEX=5, 
+
+	VBO_COUNT=4,
+	BUFFERS_COUNT=5
 };
 // BUFFER_TYPES are also organised in VAO buffer locations order
 typedef BUFFER_TYPE BUFFER_LOCATION;
 
+const unsigned int MAX_BONES_PER_VERTEX = 4;
+
+/* Instance will hold influential BONE's & WEIGHTS data for a vertex */
+struct VertexBoneData
+{
+	unsigned int BoneIDs[MAX_BONES_PER_VERTEX]{ 0 };
+	float Weights[MAX_BONES_PER_VERTEX]{ .0f };
+	
+	void AddData(unsigned int BoneID, float weight)
+	{
+		for (unsigned int i = 0; i < ARRAY_COUNT(BoneIDs, unsigned int); i++)
+		{
+			if (Weights[i] == .0)
+			{
+				this->BoneIDs[i] = BoneID;
+				this->Weights[i] = weight;
+				return;
+			}
+		}
+
+		assert(false);
+		printf("ERROR LOADING BONES");
+	}
+};
+
+
+struct MeshWorldTranslation
+{
+private:
+	glm::vec3 m_Pos;
+	float m_Rotation;
+	glm::mat4 m_ModelMatrix;
+
+public:
+	void UpdateMatrix(glm::vec3 pos, float rotation);
+
+};
 
 struct MeshEntry
 {
@@ -32,6 +75,8 @@ struct MeshEntry
 	unsigned int BaseVertex;
 	unsigned int BaseIndex;
 	unsigned int MaterialIndex;
+
+	MeshWorldTranslation mat;
 };
 
 // #-#-#-#- ASSIMP MODELS -#-#-#-#
@@ -40,13 +85,16 @@ struct MeshEntry
 class Model
 {	// Each model will now have it's own VAO. A mesh will contain its own buffer data which will be attached to its models VAO when drawing.
 public:
-	void LoadModel(const std::string& fileName);
+	/* Load a Models Data into DataStructure
+	- THIS SHOULD BE CALLED DURING PROGRAM SETUP */
+	void LoadModel(const std::string& fileName, float scale);
 
 public:
 	unsigned int m_VerticesCount;
 	unsigned int m_IndicesCount;
 	unsigned int m_MeshesCount;
 	unsigned int m_TextureCount;
+	unsigned int m_BonesCount;
 
 private:
 	bool InitialiseMeshesFromScene(const aiScene* pScene);
@@ -55,8 +103,12 @@ private:
 	void ExtractMeshesData(const aiScene* pScene);
 	void ReserveArrays();
 	void InitialiseSingleMesh(const aiMesh* paiMesh);
+	void ExtractMeshBones(const aiMesh* paiMesh);
+	void InitialiseSingleMeshBone(const aiBone* pBone);
 	void ExtractMaterialData(const aiScene* pScene);
+	
 	void SetupBuffers();
+
 
 public:
 	void AttachModelsVAO();
@@ -79,19 +131,29 @@ private:
 	std::vector<Vector3> m_Normals;
 	std::vector<Vector2> m_UVs;
 	std::vector<unsigned int> m_Indices;
+	std::vector<VertexBoneData> m_Bones;
+
+	
+
+	// Model Modifiers
+private:
+	float m_ModelScale;
+
 
 	// Getters
 public:
+	/*
+	MODELS MESH DATA
+	  Mesh data may contain the following:
+		- Base Index & Vertex
+		- Material Index
+		- Indicies Count */
 	MeshEntry& GetMeshIndex(unsigned int index) { return this->m_Meshes[index]; };
+	glm::vec3 GetModelScaleMatrix() { return glm::vec3(this->m_ModelScale, this->m_ModelScale, this->m_ModelScale);  }
 
 
 private:
 	std::string m_ObjFileName;
-
-
-	// Counts
-private:
-	
 
 
 	// Constructors

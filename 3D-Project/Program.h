@@ -43,10 +43,11 @@ private:
 private:
 	Model_Global model_nappy_guy;
 	Model_Global model_energy_ball;
+
 	Terrain model_terrain;
 
 	Model m_ModelEntity; // First test model
-
+	Model m_ModelCharacter;
 
 	/* Main Functions */
 public:

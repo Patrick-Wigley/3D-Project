@@ -17,7 +17,7 @@ const static int TEXTURE_COORDINATE_SIZE = 2;
 class Obj
 {
 private:
-	Model* pAssimpModel;
+	//Model* pAssimpModel;
 
 
 protected:
@@ -57,11 +57,16 @@ public:
 class DynamicObj : public Obj
 {
 private:
+	/* Pointer to a loaded model data-structure */
 	Model* pModel;
 
-
 public:
+	/* Entities Draw calls for its designated model meshes */
 	void SubDraw(Shader& shader, Camera& camera);
+	/* 
+	Update Entities world-space:
+	    WORLD SPACE TRANSFORMATIONS	*/
+	void WorldSpaceUpdate();
 
 public:
 	DynamicObj(std::vector<float> inital_pos,
@@ -75,7 +80,7 @@ public:
 class StaticObj : public Obj
 {
 private:
-	// Pointer to a model with populated content
+	/* Pointer to a model with populated content - THIS IS NOT AN ASSIMP LOADED MODEL */ 
 	Model_Own* p_model;
 
 public:
