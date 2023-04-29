@@ -196,6 +196,18 @@ void Shader::UpdateUniforms()
 
 }
 
+void Shader::SetBonesUniform()
+{
+    //this->m_u_Bones = glGetUniformLocation(this->shader, "u_Bones");
+    for (unsigned int i = 0; i < 100; i++)
+    {
+        
+        std::string uniformName("u_Bones[" + std::to_string(i) + "]");
+        
+        //printf("\n%s", uniformName.c_str());
+        this->m_u_Bones[i] = glGetUniformLocation(this->shader, uniformName.c_str());
+    }
+}
 
 
 
@@ -213,7 +225,6 @@ void ObjectShader::ExtendedSetUp(std::string file_name)
     // Default to True
     glUniform1i(this->u_isTextured, true);
 
-    printf("\n%s", "Hello");
 }
 
 

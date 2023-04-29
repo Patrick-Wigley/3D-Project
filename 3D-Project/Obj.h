@@ -24,6 +24,8 @@ protected:
 	int indices_count;
 	int vertices_count;
 
+protected:
+	bool ModelRigged;
 
 protected:
 	void Update(Shader&, Camera&);
@@ -59,6 +61,12 @@ class DynamicObj : public Obj
 private:
 	/* Pointer to a loaded model data-structure */
 	Model* pModel;
+
+public:
+	// For now, this is here as other shaders do not have this uniform
+	// Should make a shader class which is specific for the main.glsl uniforms
+	// Uniform Location for bone transformations
+	
 
 public:
 	/* Entities Draw calls for its designated model meshes */

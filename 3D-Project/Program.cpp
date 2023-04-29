@@ -11,8 +11,11 @@ void Program::MainLoop()
     StaticObj terrain({ -0.0f, -0.0, -0.0f }, &model_terrain, true);
 
     /* New Model usage */
-    DynamicObj entity({ 10.0f,  41.7f,  15.0f }, &m_ModelEntity, true);
-   // DynamicObj entity2({ 14.0f,  50.0f,  0.0f }, &m_ModelEntity, true);
+    DynamicObj entity({ 30.0f,  25.7f,  35.0f }, &m_ModelEntity, true);
+
+
+       
+
 
     std::vector<BulletObj> bullets{};
 
@@ -28,6 +31,14 @@ void Program::MainLoop()
 
     // Other Stuff on stack
     bool triggerPaused = false;
+
+
+    // Delete when done ###########
+    main_shader.Bind();
+    GLint u_boneActive = glGetUniformLocation(main_shader.shader, "u_boneDisplayActive");
+    unsigned int boneActive = 0;
+    unsigned int boneChangeTimer = 0;
+    //#################
 
 
     /* Loop until the user closes the window */
@@ -53,8 +64,19 @@ void Program::MainLoop()
         // Main Shader Draws
         main_shader.Bind();
         main_shader.UpdateCameraUniforms(&camera);
-        main_shader.UpdateIsTexturedUniform(true);
-
+        main_shader.UpdateIsTexturedUniform(false);
+       
+        // DELETE WHEN FINISHED WITH BONES ###########
+        if (boneChangeTimer >= 30)
+        {
+            boneChangeTimer = 0;
+            boneActive++;
+            if (boneActive >= 50)
+                boneActive = 0;
+        } boneChangeTimer++;
+        glUniform1i(u_boneActive, boneActive);
+        //################################
+       
         // Assimp Model VAO Draw Calls
         entity.SubDraw(main_shader, camera);
       //  entity2.SubDraw(main_shader, camera);
@@ -63,6 +85,7 @@ void Program::MainLoop()
         // Main VAO Draws
         glBindVertexArray(vao);
        
+        main_shader.UpdateIsTexturedUniform(true);
         square.SubDraw(main_shader, camera);
 
 
@@ -142,6 +165,7 @@ int Program::SetUp()
 
     /* Shaders */
     main_shader.ExtendedSetUp(SHADER_FOLDER_DIR + "main.glsl");
+    main_shader.SetBonesUniform();
     terrain_shader.SetUp(SHADER_FOLDER_DIR + "Terrain.glsl");
     // Note this->CubeMap has its own shader
     

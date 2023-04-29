@@ -12,6 +12,17 @@ const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
 // Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
+const glm::mat4 IDENTITY_MATRIX = glm::mat4(
+	glm::vec4(1, 0, 0, 0),
+	glm::vec4(0, 1, 0, 0),
+	glm::vec4(0, 0, 1, 0),
+	glm::vec4(0, 0, 0, 1));
+const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(.1, .0, .0, .0, .0, .1, .0, .0, .0, .0, .1, .0, .0, .0, .0, .1);
+const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat);
+
+
+
+
 const unsigned int NUM_BUFFERS = 6U;
 const unsigned int NUM_OF_VBOS = 5U;
 const enum class BUFFER_TYPE {
@@ -28,6 +39,17 @@ const enum class BUFFER_TYPE {
 // BUFFER_TYPES are also organised in VAO buffer locations order
 typedef BUFFER_TYPE BUFFER_LOCATION;
 
+const enum class VAO_BUFFER_LOCATIONS
+{
+	VERTEX = 0,
+	UV = 1,
+	NORMAL = 2,
+	BONES = 3,
+	WEIGHTS = 4,
+
+	COUNT = 5
+};
+// Note - for each Vertex BoneID, there will be a Weight.
 const unsigned int MAX_BONES_PER_VERTEX = 4;
 
 /* Instance will hold influential BONE's & WEIGHTS data for a vertex */
@@ -40,8 +62,9 @@ struct VertexBoneData
 	{
 		for (unsigned int i = 0; i < ARRAY_COUNT(BoneIDs, unsigned int); i++)
 		{
+			// Finds index which is NOT weight filled with other bones weight data
 			if (Weights[i] == .0)
-			{
+			{  
 				this->BoneIDs[i] = BoneID;
 				this->Weights[i] = weight;
 				return;
@@ -49,20 +72,22 @@ struct VertexBoneData
 		}
 
 		assert(false);
-		printf("ERROR LOADING BONES");
+		printf("ERROR LOADING BONES - MAX_BONES_PER_VERTEX size may be too small?");
 	}
 };
 
-
-struct MeshWorldTranslation
+// Stores matrices for bones
+struct BoneInfo
 {
-private:
-	glm::vec3 m_Pos;
-	float m_Rotation;
-	glm::mat4 m_ModelMatrix;
+	glm::mat4 OffsetMatrix;
+	glm::mat4 FinalTransformation;
 
-public:
-	void UpdateMatrix(glm::vec3 pos, float rotation);
+	BoneInfo(const aiMatrix4x4 Offset)
+	{
+		this->OffsetMatrix = aiMat4x4_To_GlmMat4(Offset);
+		//Set FinalTransformation to 0
+		this->FinalTransformation = glm::mat4(.0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0);
+	};
 
 };
 
@@ -76,12 +101,9 @@ struct MeshEntry
 	unsigned int BaseIndex;
 	unsigned int MaterialIndex;
 
-	MeshWorldTranslation mat;
 };
 
-// #-#-#-#- ASSIMP MODELS -#-#-#-#
-// Beginning changeover to full assimp usage - Delete when complete
-// Assimp usage
+/*  #-#-#-#- ASSIMP MODELS -#-#-#-# */
 class Model
 {	// Each model will now have it's own VAO. A mesh will contain its own buffer data which will be attached to its models VAO when drawing.
 public:
@@ -105,9 +127,15 @@ private:
 	void InitialiseSingleMesh(const aiMesh* paiMesh);
 	void ExtractMeshBones(const aiMesh* paiMesh);
 	void InitialiseSingleMeshBone(const aiBone* pBone);
+	int GetBoneID(const aiBone* BoneName);
 	void ExtractMaterialData(const aiScene* pScene);
-	
 	void SetupBuffers();
+
+	// Run-Time Methods
+public:
+	std::vector<glm::mat4> GetCurrentBoneTransforms();
+private:
+	void ReadNodeHeirarchy(const aiNode* pNode, const aiMatrix4x4 ParentMat);
 
 
 public:
@@ -122,9 +150,11 @@ private:
 	unsigned int* m_Textures;
 	unsigned int m_MaterialsCount;
 
-	// Arrays
+	// DataStuctures
 private:
-	//std::vector<aiMesh> m_aiMeshes;
+	Assimp::Importer Importer;
+	const aiScene* pScene;
+	
 	std::vector<MeshEntry> m_Meshes;
 
 	std::vector<Vector3> m_Vertices;
@@ -133,7 +163,17 @@ private:
 	std::vector<unsigned int> m_Indices;
 	std::vector<VertexBoneData> m_Bones;
 
-	
+	/* 
+	Dictionary stores:
+		Key: BoneName
+		Val: BoneID - (Bone name will have a boneID created for improved referencing) */ 
+	std::map<std::string, unsigned int> m_BoneName_To_BoneID;
+
+	/*Contains array of BoneInfo
+	BoneInfo contains:
+	glm::mat4 OffsetMatrix;
+	glm::mat4 FinalTransformation;*/
+	std::vector<BoneInfo> m_BonesInfo;
 
 	// Model Modifiers
 private:

@@ -430,16 +430,15 @@ Model_Global::Model_Global()
 /* ASSIMP MODEL LOADING CODE */
 const unsigned int DEFAULT_MODEL_SCALE = 1;
 
+const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat) {
+	return glm::mat4(\
+		glm::vec4(aiMat.a1, aiMat.a2, aiMat.a3, aiMat.a4), \
+		glm::vec4(aiMat.b1, aiMat.b2, aiMat.b3, aiMat.b4), \
+		glm::vec4(aiMat.c1, aiMat.c2, aiMat.c3, aiMat.c4), \
+		glm::vec4(aiMat.d1, aiMat.d2, aiMat.d3, aiMat.d4));
+};
 
-void MeshWorldTranslation::UpdateMatrix(glm::vec3 pos, float rotation)
-{
-	// Currently just offers simple rotation & position update in world-space
-	this->m_Pos = pos;
-	this->m_Rotation = rotation;
 
-	this->m_ModelMatrix = glm::translate(glm::mat4(1), this->m_Pos);
-	this->m_ModelMatrix = glm::rotate(this->m_ModelMatrix, glm::radians(rotation), glm::vec3(1.0f, 0.0f, 0.0f));
-}
 
 // Main method for loading model data
 void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_SCALE)
@@ -454,15 +453,15 @@ void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_S
 	glGenBuffers(ARRAY_COUNT(this->m_Buffers, GLuint), this->m_Buffers);
 
 	// Gather Assimp-Model Scene
-	Assimp::Importer Importer;
-	const aiScene* pScene = Importer.ReadFile(TEXTURE_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
+
+	this->pScene = this->Importer.ReadFile(TEXTURE_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
 
 	if (!pScene)
-		printf("\n[ASSIMP]: Err parsing '%s' - '%s'", fileName.c_str(), Importer.GetErrorString());
+		printf("\n[ASSIMP]: Err parsing '%s' - '%s'", fileName.c_str(), this->Importer.GetErrorString());
 	else
 	{
 		this->m_ObjFileName = fileName;
-		this->InitialiseMeshesFromScene(pScene);
+		this->InitialiseMeshesFromScene(this->pScene);
 		this->SetupBuffers();
 		this->m_ModelScale = scale;
 	}
@@ -501,10 +500,14 @@ void Model::SetCounts(const aiScene* pScene)
 	}
 }
 
+// Used for keep track of current active mesh during Initalising phases 
+static unsigned int Global_Current_Mesh_ID = 0;
+
 void Model::ExtractMeshesData(const aiScene* pScene)
 {
 	for (unsigned int i = 0; i < this->m_Meshes.size(); i++)
 	{
+		Global_Current_Mesh_ID = i;
 		const aiMesh* paiMesh = pScene->mMeshes[i];
 		this->InitialiseSingleMesh(paiMesh);
 	}
@@ -549,34 +552,101 @@ void Model::ExtractMeshBones(const aiMesh* paiMesh)
 		this->InitialiseSingleMeshBone(paiBone);
 	}
 }
-int sharedVertex = -1;
-float total = 0;
+
+
 
 void Model::InitialiseSingleMeshBone(const aiBone* pBone)
 {
-	printf("\nBone Name: %s - Weights Count (%u) - Bone Weights: ", pBone->mName.C_Str(), pBone->mNumWeights);
+	unsigned int meshBaseVertex = this->m_Meshes[Global_Current_Mesh_ID].BaseVertex;
+	
+	const bool DEBUG = false;
+	if (DEBUG)
+		printf("\nBone Name: %s - Weights Count (%u) - Bone Weights: ", pBone->mName.C_Str(), pBone->mNumWeights);
+	
 	for (unsigned int i = 0; i < pBone->mNumWeights; i++)
 	{
 		aiVertexWeight& weight = pBone->mWeights[i];
-		printf("\n[Vertex ID %u]: Influence (%f)", weight.mVertexId, weight.mWeight);
 		
-		//this->m_Bones[i].AddData()
-		if (sharedVertex != -1)
-		{
-			if (weight.mVertexId == sharedVertex)
-				total += weight.mWeight;
-		}
-		else 	
-			if (weight.mWeight < 1)
-			{
-				sharedVertex = weight.mVertexId;
-				total += weight.mWeight;
+		// OFFSET FOR VERTICES WITHIN THIS CURRENT MESH
+		unsigned int vertexIDInVAO = weight.mVertexId + meshBaseVertex;
 
-			}
+		if (DEBUG)
+			printf("\n[Vertex ID %u]: Influence (%f)", vertexIDInVAO, weight.mWeight);
+		
+		int boneID = this->GetBoneID(pBone);
+		this->m_Bones[vertexIDInVAO].AddData(boneID, weight.mWeight);
+		
 
 	}
 	
 }
+
+
+static int count = 0;
+
+/*This is called at runtime.
+  will return array of matrices "Transformations" to be sent over to shader as a uniform*/
+std::vector<glm::mat4> Model::GetCurrentBoneTransforms()
+{
+	std::vector<glm::mat4> transformations;
+	transformations.resize(this->m_BonesInfo.size());
+
+	aiMatrix4x4 identity = ASSIMP_IDENTITY_MATRIX;
+	this->ReadNodeHeirarchy(this->pScene->mRootNode, identity);
+	
+	for (unsigned int i = 0; i < this->m_BonesInfo.size(); i++)
+	{
+		transformations[i] = this->m_BonesInfo[i].FinalTransformation;
+	}
+
+	return transformations;
+}
+void Model::ReadNodeHeirarchy(const aiNode* pNode, const aiMatrix4x4 ParentMat)
+{
+	const std::string nodeName = pNode->mName.data;
+	
+	//printf("\nNode Name: %s", nodeName.c_str());
+	
+	aiMatrix4x4 nodesTransformation = pNode->mTransformation;
+	aiMatrix4x4 globalTransformation = ParentMat * nodesTransformation;
+
+	if (this->m_BoneName_To_BoneID.find(nodeName) != this->m_BoneName_To_BoneID.end())
+	{
+		// If found in map
+		unsigned int boneIndex = this->m_BoneName_To_BoneID[nodeName];
+		BoneInfo& r_BoneInfo = this->m_BonesInfo[boneIndex];
+		//printf("\n[%u] - %s", boneIndex, nodeName.c_str());
+		r_BoneInfo.FinalTransformation = aiMat4x4_To_GlmMat4(globalTransformation) * r_BoneInfo.OffsetMatrix;
+	}
+
+	count++;
+	for (unsigned int i = 0; i < pNode->mNumChildren; i++)
+	{
+		ReadNodeHeirarchy(pNode->mChildren[i], globalTransformation);
+	}
+}
+
+
+int Model::GetBoneID(const aiBone* pBone)
+{
+	int boneID = -1;
+	aiString BoneName = pBone->mName;
+
+	if (this->m_BoneName_To_BoneID.find(BoneName.C_Str()) == m_BoneName_To_BoneID.end())
+	{  
+		// Than this bone has JUST been created
+		boneID = this->m_BoneName_To_BoneID.size();
+		// Add new item - Key=BoneName,  Val=(New ID - SAME AS: Quantity of items + 1)
+		this->m_BoneName_To_BoneID[BoneName.C_Str()] = boneID;
+		BoneInfo boneInfo = BoneInfo(pBone->mOffsetMatrix);
+		this->m_BonesInfo.push_back(boneInfo);
+	}
+	else
+		// Else BoneName IS found in map
+		boneID = this->m_BoneName_To_BoneID[BoneName.C_Str()];
+
+	return boneID;
+};
 
 void Model::ExtractMaterialData(const aiScene* pScene)
 {
@@ -616,6 +686,12 @@ void Model::SetupBuffers()
 	unsigned int& vbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::VERTEX)];
 	unsigned int& tbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::UV)];
 	unsigned int& nbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::NORMAL)];
+	
+	/*Bones Buffer Object contains array of VertexBoneData for each vertex 
+		VertexBonesData contains
+		- BoneId's vertex is influenced by
+		- Weights for each boneId
+	*/
 	unsigned int& bbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::BONES)];
 	
 	// Index data
@@ -624,22 +700,29 @@ void Model::SetupBuffers()
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_Vertices[0]), &this->m_Vertices[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::VERTEX));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::VERTEX), 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::VERTEX));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::VERTEX), 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, tbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_UVs[0]), &this->m_UVs[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::UV));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::UV), 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::UV));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::UV), 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, nbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_Normals[0]), &this->m_Normals[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::NORMAL));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, bbo);
+	glBufferData(GL_ARRAY_BUFFER, this->m_Bones.size() * sizeof(this->m_Bones[0]), &this->m_Bones[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES));
+	glVertexAttribIPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES), MAX_BONES_PER_VERTEX, GL_INT, sizeof(VertexBoneData), 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS));
+	// Specify OFFSET - Location::BONES = BoneID's array THAN Location::WEIGHTS = Weights (which is located at offset of +BoneID's array 
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS), MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, 
+		sizeof(VertexBoneData), (const GLvoid*)(MAX_BONES_PER_VERTEX * sizeof(int32_t)));
 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -652,8 +735,9 @@ void Model::ReserveArrays()
 	this->m_Vertices.reserve(this->m_VerticesCount);
 	this->m_Normals.reserve(this->m_VerticesCount);
 	this->m_UVs.reserve(this->m_VerticesCount);
-	this->m_Bones.reserve(this->m_VerticesCount);
 	this->m_Indices.reserve(this->m_IndicesCount);
+
+	this->m_Bones.resize(this->m_VerticesCount);
 }
 
 

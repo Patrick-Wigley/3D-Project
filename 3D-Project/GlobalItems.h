@@ -16,8 +16,11 @@
 #include <sstream>
 #include <fstream>
 
+
+
 // For debug outputs
 #include <iostream>
+#include <format>
 
 #include <map>
 
@@ -34,6 +37,9 @@ typedef glm::vec2 Vector2;
 
 #define ENUM_UINT(e) (static_cast<unsigned int>(e))
 
+//static unsigned int Ticks = 0;
+//#define TIMER(TicksLimit) ((Ticks >= TicksLimit))
+//#define RESET_TIMER() (Ticks=0)
 
 // Assimp
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)

@@ -3,7 +3,7 @@
 #include "Camera.h"
 
 const std::string SHADER_FOLDER_DIR = "3D-Project\\Shaders\\";
-
+const int MAX_BONES = 5000;
 class Shader
 {
 
@@ -24,6 +24,11 @@ public:
 
 	// Uniforms
 public:
+	// only used for main.glsl
+	void SetBonesUniform();
+	// Max bones is current 100
+	int m_u_Bones[100];
+	
 	int u_modelMatrix;
 
 	// Array of Textures THEN Maps

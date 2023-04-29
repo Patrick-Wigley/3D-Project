@@ -69,6 +69,19 @@ void DynamicObj::SubDraw(Shader& shader, Camera& camera)
 	
 	// This Content will be best in a parent class member once fully changed over to Assimp Model usage
 	this->Update(shader, camera);
+	
+	
+	std::vector<glm::mat4> BoneTransforms = this->pModel->GetCurrentBoneTransforms();
+	
+	//glUniformMatrix4fv(shader.m_u_Bones, BoneTransforms.size(), GL_TRUE, glm::value_ptr(BoneTransforms.data()[0]));
+
+	for (unsigned int i = 0; i < BoneTransforms.size(); i++)
+	{
+		if (i >= MAX_BONES)
+			break;
+		glUniformMatrix4fv(shader.m_u_Bones[i], 1, GL_TRUE, (const GLfloat*)(BoneTransforms.data()));
+	}
+
 
 	// Draw call for EACH MESH in model
 	for (unsigned int i = 0; i < this->pModel->m_MeshesCount; i++)
