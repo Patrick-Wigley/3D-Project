@@ -199,7 +199,8 @@ void Shader::UpdateUniforms()
 void Shader::SetBonesUniform()
 {
     //this->m_u_Bones = glGetUniformLocation(this->shader, "u_Bones");
-    for (unsigned int i = 0; i < 100; i++)
+   
+    for (unsigned int i = 0; i < MAX_BONES; i++)
     {
         
         std::string uniformName("u_Bones[" + std::to_string(i) + "]");

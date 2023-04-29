@@ -46,8 +46,15 @@ private:
 
 	Terrain model_terrain;
 
+	/* Animated Models */
 	Model m_ModelEntity; // First test model
 	Model m_ModelCharacter;
+
+private:
+	long long ProgramStartTimeInMill;
+	long long ProgramCurrentTimeInMill;
+	float GetCurrentTimeInTicks();	
+
 
 	/* Main Functions */
 public:

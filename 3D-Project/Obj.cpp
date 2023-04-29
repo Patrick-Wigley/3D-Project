@@ -61,20 +61,20 @@ DynamicObj::DynamicObj(std::vector<float> inital_pos,
 	this->model_matrix = glm::scale(model_matrix, pModel->GetModelScaleMatrix());
 }
 
-
-void DynamicObj::SubDraw(Shader& shader, Camera& camera)
+/* Params: 
+	- Reference to shader
+	- Reference to camera
+	- CurrentTime since program started
+*/
+void DynamicObj::SubDraw(Shader& shader, Camera& camera, float CurrentTime)
 {
 	// Currently attaching vao for each object draw-call - (This will be optimised by grouping entities with same model together so this will only have to be done once per model).
 	this->pModel->AttachModelsVAO();
-	
 	// This Content will be best in a parent class member once fully changed over to Assimp Model usage
 	this->Update(shader, camera);
 	
 	
-	std::vector<glm::mat4> BoneTransforms = this->pModel->GetCurrentBoneTransforms();
-	
-	//glUniformMatrix4fv(shader.m_u_Bones, BoneTransforms.size(), GL_TRUE, glm::value_ptr(BoneTransforms.data()[0]));
-
+	std::vector<glm::mat4> BoneTransforms = this->pModel->GetCurrentBoneTransforms((float)CurrentTime);
 	for (unsigned int i = 0; i < BoneTransforms.size(); i++)
 	{
 		if (i >= MAX_BONES)

@@ -44,8 +44,8 @@ void Program::MainLoop()
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       // QueryErrors();
         glEnable(GL_DEPTH_TEST);
         glCullFace(GL_CW);
         glEnable(GL_CULL_FACE);
@@ -78,8 +78,10 @@ void Program::MainLoop()
         //################################
        
         // Assimp Model VAO Draw Calls
-        entity.SubDraw(main_shader, camera);
-      //  entity2.SubDraw(main_shader, camera);
+       
+        float ProgramRunTime = (float)(this->GetCurrentTimeInTicks() - this->ProgramStartTimeInMill) / 1000.0f;
+        entity.SubDraw(main_shader, camera, ProgramRunTime);
+        
 
         
         // Main VAO Draws
@@ -174,7 +176,9 @@ int Program::SetUp()
     /* Entity Setup */
     //this->EntitySetUp();
     
-    
+    // Set appliations start time
+    this->ProgramStartTimeInMill = GetCurrentTimeInTicks();
+
     return 0;
 }
 
@@ -266,6 +270,15 @@ void Program::QueryErrors()
     
 }
 
+float Program::GetCurrentTimeInTicks()
+{
+    // Program in current debugging development environment is WIN32
+#ifdef _WIN32
+    // But this function recommends using GetTickCount64
+    return GetTickCount64();
+#endif
+    return NULL;
+};
 
 
 /* ############ CONSTRUCTORS ############### */

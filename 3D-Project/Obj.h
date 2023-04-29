@@ -70,7 +70,7 @@ public:
 
 public:
 	/* Entities Draw calls for its designated model meshes */
-	void SubDraw(Shader& shader, Camera& camera);
+	void SubDraw(Shader& shader, Camera& camera, float CurrentTime);
 	/* 
 	Update Entities world-space:
 	    WORLD SPACE TRANSFORMATIONS	*/

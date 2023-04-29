@@ -3,7 +3,7 @@
 #include "Camera.h"
 
 const std::string SHADER_FOLDER_DIR = "3D-Project\\Shaders\\";
-const int MAX_BONES = 5000;
+
 class Shader
 {
 

@@ -12,15 +12,21 @@ const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
 // Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
+// Might be wise to extend "glm::mat4" to add these methods.
 const glm::mat4 IDENTITY_MATRIX = glm::mat4(
 	glm::vec4(1, 0, 0, 0),
 	glm::vec4(0, 1, 0, 0),
 	glm::vec4(0, 0, 1, 0),
 	glm::vec4(0, 0, 0, 1));
-const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(.1, .0, .0, .0, .0, .1, .0, .0, .0, .0, .1, .0, .0, .0, .0, .1);
+const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(
+	(ai_real).1, (ai_real).0, (ai_real).0, (ai_real).0, 
+	(ai_real).0, (ai_real).1, (ai_real).0, (ai_real).0, 
+	(ai_real).0, (ai_real).0, (ai_real).1, (ai_real).0, 
+	(ai_real).0, (ai_real).0, (ai_real).0, (ai_real).1);
+// Bodies for these functions can be found in "Models.cpp" line 434
 const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat);
-
-
+const aiMatrix4x4 GetScaleMatrix(float x, float y, float z);
+const aiMatrix4x4 GetTranslationMatrix(float x, float y, float z);
 
 
 const unsigned int NUM_BUFFERS = 6U;
@@ -133,16 +139,27 @@ private:
 
 	// Run-Time Methods
 public:
-	std::vector<glm::mat4> GetCurrentBoneTransforms();
+	std::vector<glm::mat4> GetCurrentBoneTransforms(float CurrentTime);
 private:
-	void ReadNodeHeirarchy(const aiNode* pNode, const aiMatrix4x4 ParentMat);
+	void ReadNodeHeirarchy(const aiNode* pNode, const aiMatrix4x4 ParentMat, float AnimationTime);
+	const aiNodeAnim* GetCurrentNodeAnimation(aiAnimation* Animation, std::string NodeName);
 
+	void CalculateInterpolatedScaling(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentScalingKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	void CalculateInterpolatedRotation(aiQuaternion& r_Quat, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentRotationKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	void CalculateInterpolatedPositioning(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	
+private:
+	glm::mat4 m_GlobalInverseTransform;
+	const float DEFAULT_ANIMATION_TICKS_PER_SECOND = 25.0f;
 
 public:
 	void AttachModelsVAO();
 	void AttachMaterialsTextures(unsigned int location);
 
-	// Currently DataStructure Model holds its own VAO & buffers data in array "m_Buffers".
+	// This DataStructure Model holds its own VAO & buffers data in array "m_Buffers".
 private:
 	//buffers ModelMeshes[] ??
 	unsigned int m_VAO;

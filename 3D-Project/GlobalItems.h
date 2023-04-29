@@ -22,7 +22,11 @@
 #include <iostream>
 #include <format>
 
+// Data Structures
 #include <map>
+
+// SystemInfo - (Needs "Kernal.dll" & "Kernal.lib")
+#include <Windows.h>
 
 
 
@@ -30,6 +34,7 @@ typedef GLFWwindow Window;
 
 typedef glm::vec3 Vector3;
 typedef glm::vec2 Vector2;
+
 
 
 /* Macros */ 
@@ -41,10 +46,14 @@ typedef glm::vec2 Vector2;
 //#define TIMER(TicksLimit) ((Ticks >= TicksLimit))
 //#define RESET_TIMER() (Ticks=0)
 
+
 // Assimp
 #define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)
-
-
+#define MAX_BONES 100
+// Assimp Scaling keys - (Used when interpolating node matrices using aiVectorKey)
+#define SCALE_KEY = 0
+#define POSITION_KEY = 1
+#define ROTATION_KEY = 2
 
 
 
