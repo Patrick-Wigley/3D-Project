@@ -33,7 +33,7 @@ Obj::Obj(float inital_pos[3], Model_Own* model, Model* AssimpModel
 	vertices_count = (*AssimpModel).m_VerticesCount;*/
 
 };
-
+// changes in PW BRANCH
 
 
 void Obj::Update(Shader& shader, Camera& camera)
