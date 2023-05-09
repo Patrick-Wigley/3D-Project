@@ -157,6 +157,9 @@ private:
 	void CalculateInterpolatedPositioning(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	unsigned int GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	
+public:
+	bool m_HasAnimations;
+
 private:
 	Matrix4f m_GlobalInverseTransform;
 	const float DEFAULT_ANIMATION_TICKS_PER_SECOND = 25.0f;

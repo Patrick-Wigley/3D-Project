@@ -26,6 +26,7 @@ uniform mat4 u_Bones[MAX_BONES];
 
 void main()                               
 {          
+    // Need to create a seperate shader for non-animated models
     mat4 BoneTransform = u_Bones[boneIDs[1]] * weights[1];
     BoneTransform     += u_Bones[boneIDs[0]] * weights[0];
     BoneTransform     += u_Bones[boneIDs[2]] * weights[2];
@@ -52,15 +53,13 @@ in vec2 uv;
 flat in ivec4 frag_boneIds;
 in vec4 frag_weights;
 
-
 // Texture
 uniform sampler2D u_texture;
 uniform bool u_isTextured;
 
-// Current hard coded
+// CONSTS
 int MAX_BONES = 4;
 
-uniform int u_boneDisplayActive;
 
 void main()                               
 {
@@ -70,36 +69,6 @@ void main()
     
     else
     {
-        for (int i=0; i < MAX_BONES; i++)
-        {
-            if (frag_boneIds[i] == u_boneDisplayActive)
-            {
-                if (frag_weights[i] >= .7)
-                {
-                    // Predominantly active
-                    colour = vec4(0,1,0,1);
-                }
-                else if (frag_weights[i] >= .45)
-                {
-                    colour = vec4(0,.75,0,1);
-                }
-                else if (frag_weights[i] >= .1)
-                {
-                    colour = vec4(0,.50,0,1);
-                }
-                else
-                {
-                    // Not active 
-                    colour = vec4(0,0,0,1);
-                }
-            }
-        }
-        
+        colour = vec4(.1, .1, 1, 1);
     }
-
-    
-    
-
-    //colour = vec4(.1, .5, .3, 1.0) * pos;
-    //colour = vec4(0,0,0, 1.0);
 }                                         

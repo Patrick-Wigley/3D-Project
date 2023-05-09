@@ -21,22 +21,24 @@ private:
 
 	/* Singles */
 private:
-	Camera camera;
-	SkyMap cubeMap;
+	Camera m_Camera;
+	SkyMap m_CubeMap;
 
 
-	/* Static Vao's & Shaders */
+	/* Vao's & Shaders */
 private:
 	// Predominant VAO
-	unsigned int vao;
-	// Predominant Shader
-	ObjectShader main_shader;
-	TerrainShader terrain_shader;
+	unsigned int m_PredominantVAO;
+	
+	AnimatedModelShader m_Shader_AnimModels;
+	PlainModelShader m_Shader_PlainModels;
+	TerrainShader m_Shader_Terrain;
+
 
 
 	/* Entity Arrays */
 private:
-	std::vector<BulletObj> bullets{};
+	std::vector<DynamicObj> bullets{};
 
 
 	/* CONST Models & Terrains */
@@ -44,17 +46,31 @@ private:
 	Model_Global model_nappy_guy;
 	Model_Global model_energy_ball;
 
-	Terrain model_terrain;
 
-	/* Animated Models */
-	Model m_ModelEntity; // First test model
-	Model m_ModelCharacter;
-	Model m_ModelDancingGuy;
+	/* MODELS */
+	// Animated
+	Model m_Model_Entity;
+	Model m_Model_Character;
+	Model m_Model_DancingGuy;
+	// Non Animated
+	Model m_Model_NonAnimatedModel;
+	Model m_Model_EnergyBall;
+
+	/* TERRAINS */
+	// Terrains differe from models as they have seperate methods such as collision detection
+	Terrain m_Model_Terrain;
+
+
 
 private:
-	long long ProgramStartTimeInMill;
-	long long ProgramCurrentTimeInMill;
+	long long m_ProgramStartTimeInMill;
 	float GetCurrentTimeInTicks();	
+
+
+	// Objs
+private:
+	std::vector<Light> m_Light_LightSources;
+
 
 
 	/* Main Functions */
