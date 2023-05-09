@@ -46,7 +46,7 @@ void Terrain::SetUp()
 float Terrain::find_positions_height(float* camera_pos)
 {
 	unsigned int x_val = camera_pos[X];
-	unsigned int z_val= camera_pos[Z];
+	unsigned int z_val = camera_pos[Z];
 	unsigned int index = (x_val) + (z_val * this->vertices_size[1]);
 	float position_on_tile = ((camera_pos[X] - x_val)/2) + ((camera_pos[Z] - z_val)/2);
 	

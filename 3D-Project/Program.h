@@ -43,7 +43,18 @@ private:
 private:
 	Model_Global model_nappy_guy;
 	Model_Global model_energy_ball;
+
 	Terrain model_terrain;
+
+	/* Animated Models */
+	Model m_ModelEntity; // First test model
+	Model m_ModelCharacter;
+	Model m_ModelDancingGuy;
+
+private:
+	long long ProgramStartTimeInMill;
+	long long ProgramCurrentTimeInMill;
+	float GetCurrentTimeInTicks();	
 
 
 	/* Main Functions */

@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "GlobalItems.h"
-
+#include "Utils/Maths.h"
 // For loading images
 
 #include "stb_image.h"
@@ -12,16 +12,96 @@ const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
 // Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
-const unsigned int NUM_BUFFERS = 4U;
+// Might be wise to extend "glm::mat4" to add these methods.
+//const glm::mat4 IDENTITY_MATRIX = glm::mat4(
+//	glm::vec4(1, 0, 0, 0),
+//	glm::vec4(0, 1, 0, 0),
+//	glm::vec4(0, 0, 1, 0),
+//	glm::vec4(0, 0, 0, 1));
+//const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(
+//	(ai_real).1, (ai_real).0, (ai_real).0, (ai_real).0, 
+//	(ai_real).0, (ai_real).1, (ai_real).0, (ai_real).0, 
+//	(ai_real).0, (ai_real).0, (ai_real).1, (ai_real).0, 
+//	(ai_real).0, (ai_real).0, (ai_real).0, (ai_real).1);
+//// Bodies for these functions can be found in "Models.cpp" line 434
+//const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat);
+//const aiMatrix4x4 GetScaleMatrix(float x, float y, float z);
+//const aiMatrix4x4 GetTranslationMatrix(float x, float y, float z);
+
+
+#define DEBUG false
+#define WARNINGS_ENABLED true
+
+const unsigned int NUM_BUFFERS = 6U;
+const unsigned int NUM_OF_VBOS = 5U;
 const enum class BUFFER_TYPE {
 	VERTEX=0, 
 	UV=1,
 	NORMAL=2,
-	INDEX=3, 
+	BONES=3,
+	
+	INDEX=5, 
+
+	VBO_COUNT=4,
+	BUFFERS_COUNT=5
 };
 // BUFFER_TYPES are also organised in VAO buffer locations order
 typedef BUFFER_TYPE BUFFER_LOCATION;
 
+const enum class VAO_BUFFER_LOCATIONS
+{
+	VERTEX = 0,
+	UV = 1,
+	NORMAL = 2,
+	BONES = 3,
+	WEIGHTS = 4,
+
+	COUNT = 5
+};
+// Note - for each Vertex BoneID, there will be a Weight.
+const unsigned int MAX_BONES_PER_VERTEX = 4;
+
+/* Instance will hold influential BONE's & WEIGHTS data for a vertex */
+struct VertexBoneData
+{
+	unsigned int BoneIDs[MAX_BONES_PER_VERTEX]{ 0 };
+	float Weights[MAX_BONES_PER_VERTEX]{ .0f };
+	
+	void AddData(unsigned int BoneID, float weight)
+	{
+		for (unsigned int i = 0; i < ARRAY_COUNT(BoneIDs, unsigned int); i++)
+		{
+			// Finds index which is NOT weight filled with other bones weight data
+			if (Weights[i] == .0)
+			{  
+				this->BoneIDs[i] = BoneID;
+				this->Weights[i] = weight;
+				return;
+			}
+		}	
+		if (WARNINGS_ENABLED)
+		{
+			// If this occurs, model may have some bugs
+			printf("\n[WARNING] BONE LIMIT '%u' HAS BEEN EXCEEDED - MAX_BONES_PER_VERTEX size may be too small?", MAX_BONES_PER_VERTEX);
+			//assert(false);
+		}
+	}
+};
+
+// Stores matrices for bones
+struct BoneInfo
+{
+	Matrix4f OffsetMatrix;
+	Matrix4f FinalTransformation;
+
+	BoneInfo(const Matrix4f Offset)
+	{
+		this->OffsetMatrix = Offset;
+		//Set FinalTransformation to 0
+		this->FinalTransformation = Matrix4f(.0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0);
+	};
+
+};
 
 struct MeshEntry
 {
@@ -32,19 +112,23 @@ struct MeshEntry
 	unsigned int BaseVertex;
 	unsigned int BaseIndex;
 	unsigned int MaterialIndex;
+
 };
 
-// #-#-#-#- ASSIMP MODELS -#-#-#-#
-// Beginning changeover to full assimp usage - Delete when complete
-// Assimp usage
+/*  #-#-#-#- ASSIMP MODELS -#-#-#-# */
 class Model
 {	// Each model will now have it's own VAO. A mesh will contain its own buffer data which will be attached to its models VAO when drawing.
 public:
-	void LoadModel(const std::string& fileName);
+	/* Load a Models Data into DataStructure
+	- THIS SHOULD BE CALLED DURING PROGRAM SETUP */
+	void LoadModel(const std::string& fileName, float scale);
 
 public:
 	unsigned int m_VerticesCount;
 	unsigned int m_IndicesCount;
+	unsigned int m_MeshesCount;
+	unsigned int m_TextureCount;
+	unsigned int m_BonesCount;
 
 private:
 	bool InitialiseMeshesFromScene(const aiScene* pScene);
@@ -53,35 +137,86 @@ private:
 	void ExtractMeshesData(const aiScene* pScene);
 	void ReserveArrays();
 	void InitialiseSingleMesh(const aiMesh* paiMesh);
+	void ExtractMeshBones(const aiMesh* paiMesh);
+	void InitialiseSingleMeshBone(const aiBone* pBone);
+	int GetBoneID(const aiBone* BoneName);
 	void ExtractMaterialData(const aiScene* pScene);
 	void SetupBuffers();
 
+	// Run-Time Methods
+public:
+	std::vector<Matrix4f> GetCurrentBoneTransforms(float CurrentTime);
+private:
+	void ReadNodeHeirarchy(const aiNode* pNode, const Matrix4f ParentMat, float AnimationTime);
+	const aiNodeAnim* GetCurrentNodeAnimation(const aiAnimation* Animation, std::string NodeName);
 
+	void CalculateInterpolatedScaling(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentScalingKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	void CalculateInterpolatedRotation(aiQuaternion& r_Quat, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentRotationKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	void CalculateInterpolatedPositioning(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	unsigned int GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
+	
+private:
+	Matrix4f m_GlobalInverseTransform;
+	const float DEFAULT_ANIMATION_TICKS_PER_SECOND = 25.0f;
+
+public:
+	void AttachModelsVAO();
+	void AttachMaterialsTextures(unsigned int location);
+
+	// This DataStructure Model holds its own VAO & buffers data in array "m_Buffers".
 private:
 	//buffers ModelMeshes[] ??
 	unsigned int m_VAO;
 	GLuint m_Buffers[NUM_BUFFERS];
 	unsigned int* m_Textures;
+	unsigned int m_MaterialsCount;
 
-
-	// Arrays
+	// DataStuctures
 private:
-	//std::vector<aiMesh> m_aiMeshes;
+	Assimp::Importer Importer;
+	const aiScene* pScene;
+	
 	std::vector<MeshEntry> m_Meshes;
 
 	std::vector<Vector3> m_Vertices;
 	std::vector<Vector3> m_Normals;
 	std::vector<Vector2> m_UVs;
 	std::vector<unsigned int> m_Indices;
+	std::vector<VertexBoneData> m_Bones;
+
+	/* 
+	Dictionary stores:
+		Key: BoneName
+		Val: BoneID - (Bone name will have a boneID created for improved referencing) */ 
+	std::map<std::string, unsigned int> m_BoneName_To_BoneID;
+
+	/*Contains array of BoneInfo
+	BoneInfo contains:
+	glm::mat4 OffsetMatrix;
+	glm::mat4 FinalTransformation;*/
+	std::vector<BoneInfo> m_BonesInfo;
+
+	// Model Modifiers
+private:
+	float m_ModelScale;
+
+
+	// Getters
+public:
+	/*
+	MODELS MESH DATA
+	  Mesh data may contain the following:
+		- Base Index & Vertex
+		- Material Index
+		- Indicies Count */
+	MeshEntry& GetMeshIndex(unsigned int index) { return this->m_Meshes[index]; };
+	glm::vec3 GetModelScaleMatrix() { return glm::vec3(this->m_ModelScale, this->m_ModelScale, this->m_ModelScale);  }
 
 
 private:
 	std::string m_ObjFileName;
-
-
-	// Counts
-private:
-	
 
 
 	// Constructors

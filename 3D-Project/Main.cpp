@@ -43,7 +43,6 @@ GLFWwindow* window;
 
 int WindowSetUp()
 {
-    
     if (!glfwInit())
         return -1;
 

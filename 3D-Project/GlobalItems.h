@@ -3,6 +3,7 @@
 #include <Assimp/Importer.hpp>
 #include <Assimp/scene.h>
 #include <Assimp/postprocess.h>
+#include <Assimp/version.h>
 
 // Graphics Libraries
 #include <GL\glew.h>
@@ -16,8 +17,17 @@
 #include <sstream>
 #include <fstream>
 
+
+
 // For debug outputs
 #include <iostream>
+#include <format>
+
+// Data Structures
+#include <map>
+
+// SystemInfo - (Needs "Kernal.dll" & "Kernal.lib")
+#include <Windows.h>
 
 
 
@@ -27,16 +37,24 @@ typedef glm::vec3 Vector3;
 typedef glm::vec2 Vector2;
 
 
+
 /* Macros */ 
 #define ARRAY_COUNT(arr, type) (sizeof(arr)/sizeof(type))
 
-#define ENUM_UINT(e) ((unsigned int)e)
+#define ENUM_UINT(e) (static_cast<unsigned int>(e))
+
+//static unsigned int Ticks = 0;
+//#define TIMER(TicksLimit) ((Ticks >= TicksLimit))
+//#define RESET_TIMER() (Ticks=0)
 
 
 // Assimp
-#define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)
-
-
+#define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph)
+#define MAX_BONES 100
+// Assimp Scaling keys - (Used when interpolating node matrices using aiVectorKey)
+#define SCALE_KEY = 0
+#define POSITION_KEY = 1
+#define ROTATION_KEY = 2
 
 
 

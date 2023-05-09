@@ -1,13 +1,15 @@
 #include "Models.h"
 
 
+// Vars utilised globally in heap
+static unsigned int TotalLoadedTextures = 0;
+
 
 
 const enum class FILE_TYPES
 {
 	OBJ = 1, X = 2, MTL = 3
 };
-
 
 
 
@@ -269,6 +271,7 @@ void gen_texture(unsigned int& location, std::string image_file_name, unsigned i
 
 		stbi_image_free(data);
 		std::cout << "\n[Texture] Successfully loaded: '" << image_file_name << "'";
+		TotalLoadedTextures++;
 	}
 	else
 	{
@@ -278,7 +281,40 @@ void gen_texture(unsigned int& location, std::string image_file_name, unsigned i
 
 }
 
+void gen_texture_from_embedded(unsigned int& location, const aiTexture* texture, unsigned int texture_location = 0)
+{
+	glActiveTexture(texture_location);
+	glGenTextures(1, &location);
+	glBindTexture(GL_TEXTURE_2D, location);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
+	unsigned int bufferSize = texture->mWidth;
+
+	int width, height, bit_per_pixel;
+	void* data = stbi_load_from_memory((const stbi_uc*)texture->pcData, bufferSize, &width, &height, &bit_per_pixel, 0);
+
+
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, bit_per_pixel, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -1.5f);
+
+		stbi_image_free(data);
+		std::cout << "\n[Texture] Successfully loaded: '" << texture->mFilename.data << "'";
+		TotalLoadedTextures++;
+	}
+	else
+	{
+		std::cout << "\n[Texture] Failed to load: '" << texture->mFilename.data << "'";
+	}
+}
 
 
 
@@ -426,9 +462,34 @@ Model_Global::Model_Global()
 
 // ALL ABOVE IS 1st PARTY WRITTEN
 /* ASSIMP MODEL LOADING CODE */
+const unsigned int DEFAULT_MODEL_SCALE = 1;
+
+// Might be wise to extend "glm::mat4" to add these methods.
+const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat) {
+	return glm::mat4(\
+		glm::vec4(aiMat.a1, aiMat.a2, aiMat.a3, aiMat.a4), \
+		glm::vec4(aiMat.b1, aiMat.b2, aiMat.b3, aiMat.b4), \
+		glm::vec4(aiMat.c1, aiMat.c2, aiMat.c3, aiMat.c4), \
+		glm::vec4(aiMat.d1, aiMat.d2, aiMat.d3, aiMat.d4));
+};
+const aiMatrix4x4 GetScaleMatrix(float x, float y, float z)
+{
+	return aiMatrix4x4(\
+		x, .0f, .0f, .0f, \
+		.0f, y, .0f, .0f, \
+		.0f, .0f, z, .0f, \
+		.0f, .0f, .0f, 1.0f);
+}
+const aiMatrix4x4 GetTranslationMatrix(float x, float y, float z) {
+	return aiMatrix4x4(\
+		1.0f, .0f, .0f, x, \
+		.0f, 1.0f, .0f, y, \
+		.0f, .0f, 1.0f, z, \
+		.0f, .0f, .0f, 1.0f);
+}
 
 // Main method for loading model data
-void Model::LoadModel(const std::string& fileName)
+void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_SCALE)
 {
 	// Generate models VAO
 	glGenVertexArrays(1, &this->m_VAO);
@@ -440,18 +501,22 @@ void Model::LoadModel(const std::string& fileName)
 	glGenBuffers(ARRAY_COUNT(this->m_Buffers, GLuint), this->m_Buffers);
 
 	// Gather Assimp-Model Scene
-	Assimp::Importer Importer;
-	const aiScene* pScene = Importer.ReadFile(TEXTURE_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
+
+	this->pScene = this->Importer.ReadFile(TEXTURE_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
 
 	if (!pScene)
-		printf("\n[ASSIMP]: Err parsing '%s' - '%s'", fileName.c_str(), Importer.GetErrorString());
+		printf("\n[ASSIMP]: Err parsing '%s' - '%s'", fileName.c_str(), this->Importer.GetErrorString());
 	else
 	{
 		this->m_ObjFileName = fileName;
-		this->InitialiseMeshesFromScene(pScene);
+		
+		this->m_GlobalInverseTransform = this->pScene->mRootNode->mTransformation;
+		this->m_GlobalInverseTransform.Inverse();
 
+		this->InitialiseMeshesFromScene(this->pScene);
+		this->SetupBuffers();
+		this->m_ModelScale = scale;
 	}
-
 
 	// Unbinding VAO
 	glBindVertexArray(0);
@@ -460,6 +525,7 @@ void Model::LoadModel(const std::string& fileName)
 bool Model::InitialiseMeshesFromScene(const aiScene* pScene)
 {
 	this->m_Meshes.resize(pScene->mNumMeshes);
+	this->m_MeshesCount = pScene->mNumMeshes;
 	this->SetCounts(pScene);
 	this->ReserveArrays();
 	this->ExtractMeshesData(pScene);
@@ -477,8 +543,8 @@ void Model::SetCounts(const aiScene* pScene)
 		m_Meshes[i].MaterialIndex = pScene->mMeshes[i]->mMaterialIndex;
 
 		// MESHES BASE index for Indices & Vertices - (EXAMPLE: 3rd meshes offset/base vertex = 1st + 2nd meshes vertice count and so on for n'th mesh...)
-		m_Meshes[i].BaseVertex = this->m_IndicesCount;
-		m_Meshes[i].BaseIndex = this->m_VerticesCount;
+		m_Meshes[i].BaseVertex = this->m_VerticesCount;
+		m_Meshes[i].BaseIndex = this->m_IndicesCount;
 
 		// Adds meshes vertices count onto total verticesCount each iteration
 		this->m_VerticesCount += pScene->mMeshes[i]->mNumVertices;
@@ -486,10 +552,14 @@ void Model::SetCounts(const aiScene* pScene)
 	}
 }
 
+// Used for keep track of current active mesh during Initalising phases 
+static unsigned int Global_Current_Mesh_ID = 0;
+
 void Model::ExtractMeshesData(const aiScene* pScene)
 {
 	for (unsigned int i = 0; i < this->m_Meshes.size(); i++)
 	{
+		Global_Current_Mesh_ID = i;
 		const aiMesh* paiMesh = pScene->mMeshes[i];
 		this->InitialiseSingleMesh(paiMesh);
 	}
@@ -499,12 +569,18 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 {
 
 	const aiVector3D EmptyUV(0, 0, 0);
+	
+	aiBone bone;
+	bool hasBones;
+
+	
 
 	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++)
 	{
 		const aiVector3D& pPos = paiMesh->mVertices[i];
 		const aiVector3D& pNormal = paiMesh->mNormals[i];
 		const aiVector3D& pUV = paiMesh->HasTextureCoords(0) ? paiMesh->mTextureCoords[0][i] : EmptyUV;
+	
 
 		this->m_Vertices.push_back(Vector3(pPos.x, pPos.y, pPos.z));
 		this->m_Normals.push_back(Vector3(pNormal.x, pNormal.y, pNormal.z));
@@ -516,15 +592,282 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 		for (unsigned int j = 0; j < 3; j++)
 			m_Indices.push_back(pFace.mIndices[j]);
 	}
-
+	if (paiMesh->HasBones())
+		this->ExtractMeshBones(paiMesh);
 }
+
+void Model::ExtractMeshBones(const aiMesh* paiMesh)
+{
+	for (unsigned int i = 0; i < paiMesh->mNumBones; i++)
+	{
+		aiBone* paiBone = paiMesh->mBones[i];
+		this->InitialiseSingleMeshBone(paiBone);
+	}
+}
+
+
+
+void Model::InitialiseSingleMeshBone(const aiBone* pBone)
+{
+	unsigned int meshBaseVertex = this->m_Meshes[Global_Current_Mesh_ID].BaseVertex;
+	
+	
+	if (DEBUG)
+		printf("\nBone Name: %s - Weights Count (%u) - Bone Weights: ", pBone->mName.C_Str(), pBone->mNumWeights);
+	
+
+	for (unsigned int i = 0; i < pBone->mNumWeights; i++)
+	{
+		aiVertexWeight& weight = pBone->mWeights[i];
+		
+		// OFFSET FOR VERTICES WITHIN THIS CURRENT MESH
+		unsigned int vertexIDInVAO = weight.mVertexId + meshBaseVertex;
+
+		//if (DEBUG)
+		//	printf("\n[Vertex ID %u]: Influence (%f)", vertexIDInVAO, weight.mWeight);
+		
+	
+		int boneID = this->GetBoneID(pBone);
+		this->m_Bones[vertexIDInVAO].AddData(boneID, weight.mWeight);
+		
+
+	}
+	
+}
+
+
+/*This is called at runtime.
+  will return array of matrices "Transformations" to be sent over to shader as a uniform*/
+std::vector<Matrix4f> Model::GetCurrentBoneTransforms(float CurrentTime)
+{
+	std::vector<Matrix4f> transformations;
+	transformations.resize(this->m_BonesInfo.size());
+
+	// Change when using multiple animations
+	const unsigned int animationsIndex = 0;
+	//auto test = this->pScene->mNumAnimations;
+	float animationsTicksPerSecond = (float)(this->pScene->mAnimations[animationsIndex]->mTicksPerSecond != 0 ? this->pScene->mAnimations[animationsIndex]->mTicksPerSecond : this->DEFAULT_ANIMATION_TICKS_PER_SECOND);
+	float timeInTicks = CurrentTime * animationsTicksPerSecond;
+	float animationTimeInTicks = fmod(timeInTicks, (float)this->pScene->mAnimations[animationsIndex]->mDuration);
+
+	Matrix4f identity;
+	identity.InitIdentity();
+	
+	this->ReadNodeHeirarchy(this->pScene->mRootNode, identity, animationTimeInTicks);
+	
+	for (unsigned int i = 0; i < this->m_BonesInfo.size(); i++)
+	{
+		transformations[i] = this->m_BonesInfo[i].FinalTransformation;
+	}
+
+	return transformations;
+}
+
+
+void Model::ReadNodeHeirarchy(const aiNode* pNode, const Matrix4f ParentMat, float AnimationTime)
+{
+	std::string NodeName(pNode->mName.data);
+
+	const aiAnimation* pAnimation = pScene->mAnimations[0];
+
+	Matrix4f NodeTransformation(pNode->mTransformation);
+	
+
+	const aiNodeAnim* pNodeAnim;
+	pNodeAnim = GetCurrentNodeAnimation(pAnimation, NodeName);
+	
+
+	if (pNodeAnim) {
+		
+		aiVector3D Scaling;
+		CalculateInterpolatedScaling(Scaling, pNodeAnim, AnimationTime);
+		Matrix4f ScalingM;
+		ScalingM.InitScaleTransform(Scaling.x, Scaling.y, Scaling.z);
+
+		
+		aiQuaternion RotationQ;
+		CalculateInterpolatedRotation(RotationQ, pNodeAnim, AnimationTime);
+		Matrix4f RotationM = Matrix4f(RotationQ.GetMatrix());
+
+		
+		aiVector3D Translation;
+		CalculateInterpolatedPositioning(Translation, pNodeAnim, AnimationTime);
+		Matrix4f TranslationM;
+		TranslationM.InitTranslationTransform(Translation.x, Translation.y, Translation.z);
+
+	
+		NodeTransformation = TranslationM * RotationM * ScalingM;
+	}
+	
+
+	Matrix4f GlobalTransformation = ParentMat * NodeTransformation;
+
+	if (m_BoneName_To_BoneID.find(NodeName) != m_BoneName_To_BoneID.end()) {
+		unsigned int BoneIndex = m_BoneName_To_BoneID[NodeName];
+		m_BonesInfo[BoneIndex].FinalTransformation = m_GlobalInverseTransform * GlobalTransformation *
+			m_BonesInfo[BoneIndex].OffsetMatrix;
+	}
+
+	for (unsigned int i = 0; i < pNode->mNumChildren; i++) {
+		ReadNodeHeirarchy(pNode->mChildren[i], GlobalTransformation, AnimationTime);
+	}
+
+};
+// Will return NULL if not aiNodeAnim not found
+const aiNodeAnim* Model::GetCurrentNodeAnimation(const aiAnimation* animation, std::string nodeName)
+{
+	for (unsigned int  i = 0; i < animation->mNumChannels; i++) {
+		const aiNodeAnim* pNodeAnim = animation->mChannels[i];
+
+		if (std::string(pNodeAnim->mNodeName.data) == nodeName) {
+			return pNodeAnim;
+		}
+	}
+
+	return NULL;
+}
+void Model::CalculateInterpolatedScaling(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	/* SCALING */
+	// Should be atleast 2 values for interpolation
+	if (pNodeAnimation->mNumScalingKeys == 1) {
+		r_Vec = pNodeAnimation->mScalingKeys[0].mValue;
+		return;
+	}
+
+	unsigned int keyTypeIndex = this->GetCurrentScalingKeyIndex(pNodeAnimation, AnimationTime);
+	unsigned int neighbourKeyTypeIndex = keyTypeIndex + 1;
+
+	aiVectorKey& key1 = pNodeAnimation->mScalingKeys[keyTypeIndex];
+	aiVectorKey& key2 = pNodeAnimation->mScalingKeys[neighbourKeyTypeIndex];
+
+	float time1 = (float)key1.mTime;
+	float time2 = (float)key2.mTime;
+	float deltaTime = time2 - time1;
+	float factor = (AnimationTime - time1 / deltaTime);
+
+	const aiVector3D& start = key1.mValue;
+	const aiVector3D& end = key2.mValue;
+	aiVector3D delta = end - start;
+	r_Vec = start + factor * delta;
+}
+void Model::CalculateInterpolatedRotation(aiQuaternion& r_Quat, const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	// we need at least two values to interpolate...
+	if (pNodeAnimation->mNumRotationKeys == 1) {
+		r_Quat = pNodeAnimation->mRotationKeys[0].mValue;
+		return;
+	}
+
+	unsigned int keyTypeIndex = GetCurrentRotationKeyIndex(pNodeAnimation, AnimationTime);
+	unsigned int neighbourKeyTypeIndex = keyTypeIndex + 1;
+
+	const aiQuatKey& key1 = pNodeAnimation->mRotationKeys[keyTypeIndex];
+	const aiQuatKey& key2 = pNodeAnimation->mRotationKeys[neighbourKeyTypeIndex];
+
+	float DeltaTime = (float)(key2.mTime - key1.mTime);
+	float Factor = (AnimationTime - (float)key1.mTime) / DeltaTime;
+	const aiQuaternion& StartRotationQ = key1.mValue;
+	const aiQuaternion& EndRotationQ =   key2.mValue;
+	aiQuaternion::Interpolate(r_Quat, StartRotationQ, EndRotationQ, Factor);
+	r_Quat = r_Quat.Normalize();
+}
+
+
+void Model::CalculateInterpolatedPositioning(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	/* TRANSFORMING/POSITIONING */
+	// Should be atleast 2 values for interpolation
+	if (pNodeAnimation->mNumPositionKeys == 1)
+	{
+		r_Vec = pNodeAnimation->mPositionKeys[0].mValue;
+		return;
+	}
+
+	unsigned int keyTypeIndex = this->GetCurrentPositionKeyIndex(pNodeAnimation, AnimationTime);
+	unsigned int neighbourKeyTypeIndex = keyTypeIndex + 1;
+
+	aiVectorKey& key1 = pNodeAnimation->mPositionKeys[keyTypeIndex];
+	aiVectorKey& key2 = pNodeAnimation->mPositionKeys[neighbourKeyTypeIndex];
+
+	float time1 = (float)key1.mTime;
+	float time2 = (float)key2.mTime;
+	float deltaTime = time2 - time1;
+	float factor = (AnimationTime - time1 / deltaTime);
+
+	const aiVector3D& start = key1.mValue;
+	const aiVector3D& end = key2.mValue;
+	aiVector3D delta = end - start;
+	r_Vec = start + factor * delta;
+}
+
+
+unsigned int Model::GetCurrentScalingKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	assert(pNodeAnimation->mNumScalingKeys > 0);
+
+	for (unsigned int i = 0; i < pNodeAnimation->mNumScalingKeys - 1; i++) {
+		if (AnimationTime < (float)pNodeAnimation->mScalingKeys[i + 1].mTime) {
+			return i;
+		}
+	}
+	assert(0);
+	return 0;
+}
+
+unsigned int Model::GetCurrentRotationKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	assert(pNodeAnimation->mNumRotationKeys > 0);
+
+	for (unsigned int i = 0; i < pNodeAnimation->mNumRotationKeys - 1; i++) {
+		if (AnimationTime < (float)pNodeAnimation->mRotationKeys[i + 1].mTime) {
+			return i;
+		}
+	}
+
+	assert(0);
+	return 0;
+}
+unsigned int Model::GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime)
+{
+	for (unsigned int i = 0; i < pNodeAnimation->mNumPositionKeys - 1; i++) {
+		if (AnimationTime < (float)pNodeAnimation->mPositionKeys[i + 1].mTime) {
+			return i;
+		}
+	}
+	assert(0);
+	return 0;
+}
+
+ 
+int Model::GetBoneID(const aiBone* pBone)
+{
+	int boneID = -1;
+	aiString BoneName = pBone->mName;
+
+	if (this->m_BoneName_To_BoneID.find(BoneName.C_Str()) == m_BoneName_To_BoneID.end())
+	{  
+		// Than this bone has JUST been created
+		boneID = this->m_BoneName_To_BoneID.size();
+		// Add new item - Key=BoneName,  Val=(New ID - SAME AS: Quantity of items + 1)
+		this->m_BoneName_To_BoneID[BoneName.C_Str()] = boneID;
+		BoneInfo boneInfo = BoneInfo(pBone->mOffsetMatrix);
+		this->m_BonesInfo.push_back(boneInfo);
+	}
+	else
+		// Else BoneName IS found in map
+		boneID = this->m_BoneName_To_BoneID[BoneName.C_Str()];
+
+	return boneID;
+};
 
 void Model::ExtractMaterialData(const aiScene* pScene)
 {
-
-	this->m_Textures = (unsigned int*)malloc(sizeof(unsigned int) * pScene->mNumMaterials);
-	//std::string::size_type SlashIndex = File
-
+	// Set an m_Materials maybe 
+	// Currently, a texture-slot is reserved for each MATERIAL - (If a material has no texture, a slot will be resevered anyway, at the momment)
+	this->m_Textures = (unsigned int*)malloc(sizeof(unsigned int) * pScene->mNumTextures);
+	this->m_MaterialsCount = pScene->mNumMaterials;
+	
 
 
 	// Iterate through all identified materials
@@ -537,12 +880,22 @@ void Model::ExtractMaterialData(const aiScene* pScene)
 		{
 			aiString path;
 			if (pMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS)
-			{
-				std::string imgFileName(path.data);
-				// Currently, all images are in same folder as obj & mtl files
-				std::string fullPath(TEXTURE_FOLDER + imgFileName);
+			{			
 
-				gen_texture(this->m_Textures[i], fullPath, i);
+				const aiTexture* paiTexture = this->pScene->GetEmbeddedTexture(path.data);
+				if (paiTexture)
+				{
+					gen_texture_from_embedded(this->m_Textures[this->m_TextureCount], paiTexture, i);
+				}
+				else 
+				{
+					std::string imgFileName(path.data);
+					std::string fullPath(TEXTURE_FOLDER + imgFileName);
+					gen_texture(this->m_Textures[i], fullPath, i);
+				}
+
+
+				this->m_TextureCount++;
 			}
 		}
 
@@ -551,34 +904,51 @@ void Model::ExtractMaterialData(const aiScene* pScene)
 
 void Model::SetupBuffers()
 {
+	// VAO data
 	unsigned int& vbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::VERTEX)];
 	unsigned int& tbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::UV)];
 	unsigned int& nbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::NORMAL)];
+	
+	/*Bones Buffer Object contains array of VertexBoneData for each vertex 
+		VertexBonesData contains
+		- BoneId's vertex is influenced by
+		- Weights for each boneId
+	*/
+	unsigned int& bbo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::BONES)];
+	
+	// Index data
 	unsigned int& ibo = this->m_Buffers[ENUM_UINT(BUFFER_TYPE::INDEX)];
-
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_Vertices[0]), &this->m_Vertices[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::VERTEX));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::VERTEX), 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::VERTEX));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::VERTEX), 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, tbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_UVs[0]), &this->m_UVs[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::UV));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::UV), 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::UV));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::UV), 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, nbo);
 	glBufferData(GL_ARRAY_BUFFER, this->m_Vertices.size() * sizeof(this->m_Normals[0]), &this->m_Normals[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(BUFFER_LOCATION::NORMAL));
-	glVertexAttribPointer(ENUM_UINT(BUFFER_LOCATION::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL));
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, bbo);
+	glBufferData(GL_ARRAY_BUFFER, this->m_Bones.size() * sizeof(this->m_Bones[0]), &this->m_Bones[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES));
+	glVertexAttribIPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES), MAX_BONES_PER_VERTEX, GL_INT, sizeof(VertexBoneData), 0);
+	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS));
+	// Specify OFFSET - Location::BONES = BoneID's array THAN Location::WEIGHTS = Weights (which is located at offset of +BoneID's array 
+	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS), MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, 
+		sizeof(VertexBoneData), (const GLvoid*)(MAX_BONES_PER_VERTEX * sizeof(int32_t)));
 
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->m_Indices.size() * sizeof(unsigned int), this->m_Indices.data(), GL_DYNAMIC_DRAW);
-
 }
 
 
@@ -589,12 +959,32 @@ void Model::ReserveArrays()
 	this->m_UVs.reserve(this->m_VerticesCount);
 	this->m_Indices.reserve(this->m_IndicesCount);
 
+	this->m_Bones.resize(this->m_VerticesCount);
 }
+
+
+
+void Model::AttachModelsVAO()
+{
+	glBindVertexArray(this->m_VAO);
+}
+void Model::AttachMaterialsTextures(unsigned int location = 0)
+{
+	// With mutlitple textures: For loop for each texture below?
+	// Activate Texture Slot
+	// For now, only binding one texture per model
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->m_Textures[location]);
+}
+
+
 
 Model::Model()
 	:
 	m_VAO(NULL), m_Buffers(),
 	m_Meshes(std::vector<MeshEntry>()),
-	m_VerticesCount(0), m_IndicesCount(0)
-
+	m_VerticesCount(0), m_IndicesCount(0), m_MaterialsCount(0), m_MeshesCount(0), m_TextureCount(0), 
+	m_Textures(NULL), m_ModelScale(NULL)
+	
 {}

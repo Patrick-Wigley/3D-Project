@@ -3,15 +3,19 @@
 
 void Program::MainLoop()
 {
+    /* Old Model_Own usage */ 
     // Entities
     StaticObj square({ 0.0f,  50.0f,  0.0f }, &model_nappy_guy);
-    
-    
 
-
-    /* Terrains */
+    // Terrains
     StaticObj terrain({ -0.0f, -0.0, -0.0f }, &model_terrain, true);
 
+    /* New Model usage */
+    DynamicObj entity({ 30.0f, 42.7f,  35.0f }, &m_ModelEntity, true);
+    DynamicObj dancingGuy({ 20.0f, 42.7f, 35.0f }, &m_ModelDancingGuy, true);
+
+       
+   
 
     std::vector<BulletObj> bullets{};
 
@@ -29,11 +33,19 @@ void Program::MainLoop()
     bool triggerPaused = false;
 
 
+    // Delete when done ###########
+    main_shader.Bind();
+    GLint u_boneActive = glGetUniformLocation(main_shader.shader, "u_boneDisplayActive");
+    unsigned int boneActive = 0;
+    unsigned int boneChangeTimer = 0;
+    //#################
+
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-       // QueryErrors();
         glEnable(GL_DEPTH_TEST);
         glCullFace(GL_CW);
         glEnable(GL_CULL_FACE);
@@ -49,22 +61,34 @@ void Program::MainLoop()
         cubeMap.Draw(camera.GetRotationMatrix, camera.GetProjectionMatrix);
 
 
-        // Main VAO Draws
-        glBindVertexArray(vao);
-
-
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE
-        // Terrain Shader Draw
-        (terrain_shader).Bind();
-        (terrain_shader).UpdateCameraUniforms(&camera);
-        terrain.Draw(terrain_shader, camera);
-
-
         // Main Shader Draws
         main_shader.Bind();
         main_shader.UpdateCameraUniforms(&camera);
+        main_shader.UpdateIsTexturedUniform(false);
+       
+        // DELETE WHEN FINISHED WITH BONES ###########
+        if (boneChangeTimer >= 30)
+        {
+            boneChangeTimer = 0;
+            boneActive++;
+            if (boneActive >= 50)
+                boneActive = 0;
+        } boneChangeTimer++;
+        glUniform1i(u_boneActive, boneActive);
+        //################################
+       
+        // Assimp Model VAO Draw Calls
         main_shader.UpdateIsTexturedUniform(true);
-        square.Draw(main_shader, camera);
+        float ProgramRunTime = (float)(this->GetCurrentTimeInTicks() - this->ProgramStartTimeInMill) / 1000.0f;
+        entity.SubDraw(main_shader, camera, ProgramRunTime);
+        dancingGuy.SubDraw(main_shader, camera, ProgramRunTime);
+
+        
+        // Main VAO Draws
+        glBindVertexArray(vao);
+       
+        main_shader.UpdateIsTexturedUniform(true);
+        square.SubDraw(main_shader, camera);
 
 
 
@@ -72,8 +96,15 @@ void Program::MainLoop()
         for (unsigned int bullet = 0; bullet < bullets.size(); bullet++)
         {
             bullets[bullet].Sub_Update();
-            bullets[bullet].Draw(main_shader, camera);
+            bullets[bullet].SubDraw(main_shader, camera);
         }
+
+        // Terrain Shader Draw
+        (terrain_shader).Bind();
+        (terrain_shader).UpdateCameraUniforms(&camera);
+        terrain.SubDraw(terrain_shader, camera);
+
+
 
 
 
@@ -97,7 +128,8 @@ void Program::MainLoop()
         }
 
 
-
+        
+   
 
        // QueryErrors();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -116,26 +148,27 @@ void Program::MainLoop()
 
 
  /* ############ PROGRAM SETUP ############### */
-
 int Program::SetUp()
 {
     /* Window Size - (Width & Height) */
 	this->window_size = (int*)malloc(sizeof(int) * 2);    
     glfwGetWindowSize(this->window, &window_size[0], &window_size[1]);
 
+    printf("\nCurrent Assimp Version: %u\n", aiGetVersionMajor());
+
     /* Skymap */
+    // Uses it's own VAO
     this->cubeMap.SetUp();
 
 
-    /* Predominant VAO */
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+   
 
     /* Models Setup */
     this->ModelsSetUp();
 
     /* Shaders */
     main_shader.ExtendedSetUp(SHADER_FOLDER_DIR + "main.glsl");
+    main_shader.SetBonesUniform();
     terrain_shader.SetUp(SHADER_FOLDER_DIR + "Terrain.glsl");
     // Note this->CubeMap has its own shader
     
@@ -144,7 +177,9 @@ int Program::SetUp()
     /* Entity Setup */
     //this->EntitySetUp();
     
-    
+    // Set appliations start time
+    this->ProgramStartTimeInMill = GetCurrentTimeInTicks();
+
     return 0;
 }
 
@@ -152,16 +187,31 @@ int Program::SetUp()
 
 int Program::ModelsSetUp()
 {
+    /* Assimp Loaded Models */
+    // These models use their own VAO
+    // 
+    //m_ModelEntity.LoadModel("Jumping Down.fbx", 3);
+    m_ModelEntity.LoadModel("Corkscrew Evade 60fps.fbx", .05);
+    m_ModelDancingGuy.LoadModel("Character1B.fbx", .011);
+    //m_ModelEntity.LoadModel("boblampclean.md5mesh", .321);
+    //m_ModelEntity.LoadModel("Hip Hop Dancing.dae", 10.91);
+
+
+    //m_ModelCharacter.LoadModel("Medical worker.obj");
+    
+    /* Predominant VAO */
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
     // CONSTANT MODELS - (Objects will use these skins if assigned)   
     this->model_nappy_guy.SetUp("NappyGuy");
     this->model_energy_ball.SetUp("EnergyBall");
 
-    Model NappyGuy_Assimp;
-    NappyGuy_Assimp.LoadModel("NappyGuy.obj");
-
     ///* Terrains */
     this->model_terrain.SetUp();
-       
+
+
+
+
     return 0;
 }
 
@@ -228,6 +278,15 @@ void Program::QueryErrors()
     
 }
 
+float Program::GetCurrentTimeInTicks()
+{
+    // Program in current debugging development environment is WIN32
+#ifdef _WIN32
+    // But this function recommends using GetTickCount64
+    return GetTickCount64();
+#endif
+    return NULL;
+};
 
 
 /* ############ CONSTRUCTORS ############### */
