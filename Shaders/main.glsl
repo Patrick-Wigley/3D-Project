@@ -26,8 +26,8 @@ uniform mat4 u_Bones[MAX_BONES];
 
 void main()                               
 {          
-    mat4 BoneTransform = u_Bones[boneIDs[0]] * weights[0];
-    BoneTransform     += u_Bones[boneIDs[1]] * weights[1];
+    mat4 BoneTransform = u_Bones[boneIDs[1]] * weights[1];
+    BoneTransform     += u_Bones[boneIDs[0]] * weights[0];
     BoneTransform     += u_Bones[boneIDs[2]] * weights[2];
     BoneTransform     += u_Bones[boneIDs[3]] * weights[3];
     vec4 local_position = BoneTransform * vec4(position, 1.0);

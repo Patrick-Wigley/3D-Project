@@ -49,6 +49,7 @@ private:
 	/* Animated Models */
 	Model m_ModelEntity; // First test model
 	Model m_ModelCharacter;
+	Model m_ModelDancingGuy;
 
 private:
 	long long ProgramStartTimeInMill;

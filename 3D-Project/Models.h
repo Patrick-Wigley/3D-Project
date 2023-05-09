@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "GlobalItems.h"
-
+#include "Utils/Maths.h"
 // For loading images
 
 #include "stb_image.h"
@@ -13,21 +13,24 @@ const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
 // Might be wise to extend "glm::mat4" to add these methods.
-const glm::mat4 IDENTITY_MATRIX = glm::mat4(
-	glm::vec4(1, 0, 0, 0),
-	glm::vec4(0, 1, 0, 0),
-	glm::vec4(0, 0, 1, 0),
-	glm::vec4(0, 0, 0, 1));
-const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(
-	(ai_real).1, (ai_real).0, (ai_real).0, (ai_real).0, 
-	(ai_real).0, (ai_real).1, (ai_real).0, (ai_real).0, 
-	(ai_real).0, (ai_real).0, (ai_real).1, (ai_real).0, 
-	(ai_real).0, (ai_real).0, (ai_real).0, (ai_real).1);
-// Bodies for these functions can be found in "Models.cpp" line 434
-const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat);
-const aiMatrix4x4 GetScaleMatrix(float x, float y, float z);
-const aiMatrix4x4 GetTranslationMatrix(float x, float y, float z);
+//const glm::mat4 IDENTITY_MATRIX = glm::mat4(
+//	glm::vec4(1, 0, 0, 0),
+//	glm::vec4(0, 1, 0, 0),
+//	glm::vec4(0, 0, 1, 0),
+//	glm::vec4(0, 0, 0, 1));
+//const aiMatrix4x4 ASSIMP_IDENTITY_MATRIX = aiMatrix4x4(
+//	(ai_real).1, (ai_real).0, (ai_real).0, (ai_real).0, 
+//	(ai_real).0, (ai_real).1, (ai_real).0, (ai_real).0, 
+//	(ai_real).0, (ai_real).0, (ai_real).1, (ai_real).0, 
+//	(ai_real).0, (ai_real).0, (ai_real).0, (ai_real).1);
+//// Bodies for these functions can be found in "Models.cpp" line 434
+//const glm::mat4 aiMat4x4_To_GlmMat4(aiMatrix4x4 aiMat);
+//const aiMatrix4x4 GetScaleMatrix(float x, float y, float z);
+//const aiMatrix4x4 GetTranslationMatrix(float x, float y, float z);
 
+
+#define DEBUG false
+#define WARNINGS_ENABLED true
 
 const unsigned int NUM_BUFFERS = 6U;
 const unsigned int NUM_OF_VBOS = 5U;
@@ -75,24 +78,27 @@ struct VertexBoneData
 				this->Weights[i] = weight;
 				return;
 			}
+		}	
+		if (WARNINGS_ENABLED)
+		{
+			// If this occurs, model may have some bugs
+			printf("\n[WARNING] BONE LIMIT '%u' HAS BEEN EXCEEDED - MAX_BONES_PER_VERTEX size may be too small?", MAX_BONES_PER_VERTEX);
+			//assert(false);
 		}
-
-		assert(false);
-		printf("ERROR LOADING BONES - MAX_BONES_PER_VERTEX size may be too small?");
 	}
 };
 
 // Stores matrices for bones
 struct BoneInfo
 {
-	glm::mat4 OffsetMatrix;
-	glm::mat4 FinalTransformation;
+	Matrix4f OffsetMatrix;
+	Matrix4f FinalTransformation;
 
-	BoneInfo(const aiMatrix4x4 Offset)
+	BoneInfo(const Matrix4f Offset)
 	{
-		this->OffsetMatrix = aiMat4x4_To_GlmMat4(Offset);
+		this->OffsetMatrix = Offset;
 		//Set FinalTransformation to 0
-		this->FinalTransformation = glm::mat4(.0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0);
+		this->FinalTransformation = Matrix4f(.0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0, .0);
 	};
 
 };
@@ -139,10 +145,10 @@ private:
 
 	// Run-Time Methods
 public:
-	std::vector<glm::mat4> GetCurrentBoneTransforms(float CurrentTime);
+	std::vector<Matrix4f> GetCurrentBoneTransforms(float CurrentTime);
 private:
-	void ReadNodeHeirarchy(const aiNode* pNode, const aiMatrix4x4 ParentMat, float AnimationTime);
-	const aiNodeAnim* GetCurrentNodeAnimation(aiAnimation* Animation, std::string NodeName);
+	void ReadNodeHeirarchy(const aiNode* pNode, const Matrix4f ParentMat, float AnimationTime);
+	const aiNodeAnim* GetCurrentNodeAnimation(const aiAnimation* Animation, std::string NodeName);
 
 	void CalculateInterpolatedScaling(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	unsigned int GetCurrentScalingKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
@@ -152,7 +158,7 @@ private:
 	unsigned int GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	
 private:
-	glm::mat4 m_GlobalInverseTransform;
+	Matrix4f m_GlobalInverseTransform;
 	const float DEFAULT_ANIMATION_TICKS_PER_SECOND = 25.0f;
 
 public:

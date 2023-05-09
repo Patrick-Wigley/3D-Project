@@ -74,12 +74,12 @@ void DynamicObj::SubDraw(Shader& shader, Camera& camera, float CurrentTime)
 	this->Update(shader, camera);
 	
 	
-	std::vector<glm::mat4> BoneTransforms = this->pModel->GetCurrentBoneTransforms((float)CurrentTime);
+	std::vector<Matrix4f> BoneTransforms = this->pModel->GetCurrentBoneTransforms((float)CurrentTime);
 	for (unsigned int i = 0; i < BoneTransforms.size(); i++)
 	{
 		if (i >= MAX_BONES)
 			break;
-		glUniformMatrix4fv(shader.m_u_Bones[i], 1, GL_TRUE, (const GLfloat*)(BoneTransforms.data()));
+		glUniformMatrix4fv(shader.m_u_Bones[i], 1, GL_TRUE, (const GLfloat*)(BoneTransforms[i]));
 	}
 
 

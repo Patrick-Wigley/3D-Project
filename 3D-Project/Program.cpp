@@ -11,11 +11,11 @@ void Program::MainLoop()
     StaticObj terrain({ -0.0f, -0.0, -0.0f }, &model_terrain, true);
 
     /* New Model usage */
-    DynamicObj entity({ 30.0f,  25.7f,  35.0f }, &m_ModelEntity, true);
-
+    DynamicObj entity({ 30.0f, 42.7f,  35.0f }, &m_ModelEntity, true);
+    DynamicObj dancingGuy({ 20.0f, 42.7f, 35.0f }, &m_ModelDancingGuy, true);
 
        
-
+   
 
     std::vector<BulletObj> bullets{};
 
@@ -78,10 +78,10 @@ void Program::MainLoop()
         //################################
        
         // Assimp Model VAO Draw Calls
-       
+        main_shader.UpdateIsTexturedUniform(true);
         float ProgramRunTime = (float)(this->GetCurrentTimeInTicks() - this->ProgramStartTimeInMill) / 1000.0f;
         entity.SubDraw(main_shader, camera, ProgramRunTime);
-        
+        dancingGuy.SubDraw(main_shader, camera, ProgramRunTime);
 
         
         // Main VAO Draws
@@ -154,6 +154,7 @@ int Program::SetUp()
 	this->window_size = (int*)malloc(sizeof(int) * 2);    
     glfwGetWindowSize(this->window, &window_size[0], &window_size[1]);
 
+    printf("\nCurrent Assimp Version: %u\n", aiGetVersionMajor());
 
     /* Skymap */
     // Uses it's own VAO
@@ -188,8 +189,15 @@ int Program::ModelsSetUp()
 {
     /* Assimp Loaded Models */
     // These models use their own VAO
-    m_ModelEntity.LoadModel("character1.fbx", .023);
-   // m_ModelCharacter.LoadModel("Medical worker.obj");
+    // 
+    //m_ModelEntity.LoadModel("Jumping Down.fbx", 3);
+    m_ModelEntity.LoadModel("Corkscrew Evade 60fps.fbx", .05);
+    m_ModelDancingGuy.LoadModel("Character1B.fbx", .011);
+    //m_ModelEntity.LoadModel("boblampclean.md5mesh", .321);
+    //m_ModelEntity.LoadModel("Hip Hop Dancing.dae", 10.91);
+
+
+    //m_ModelCharacter.LoadModel("Medical worker.obj");
     
     /* Predominant VAO */
     glGenVertexArrays(1, &vao);

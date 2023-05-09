@@ -3,6 +3,7 @@
 #include <Assimp/Importer.hpp>
 #include <Assimp/scene.h>
 #include <Assimp/postprocess.h>
+#include <Assimp/version.h>
 
 // Graphics Libraries
 #include <GL\glew.h>
@@ -48,7 +49,7 @@ typedef glm::vec2 Vector2;
 
 
 // Assimp
-#define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices)
+#define ASSIMP_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph)
 #define MAX_BONES 100
 // Assimp Scaling keys - (Used when interpolating node matrices using aiVectorKey)
 #define SCALE_KEY = 0
