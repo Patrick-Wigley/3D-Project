@@ -70,31 +70,7 @@ void main()
     
     else
     {
-        for (int i=0; i < MAX_BONES; i++)
-        {
-            if (frag_boneIds[i] == u_boneDisplayActive)
-            {
-                if (frag_weights[i] >= .7)
-                {
-                    // Predominantly active
-                    colour = vec4(0,1,0,1);
-                }
-                else if (frag_weights[i] >= .45)
-                {
-                    colour = vec4(0,.75,0,1);
-                }
-                else if (frag_weights[i] >= .1)
-                {
-                    colour = vec4(0,.50,0,1);
-                }
-                else
-                {
-                    // Not active 
-                    colour = vec4(0,0,0,1);
-                }
-            }
-        }
-        
+        colour = vec4(.1,.1,1,1);
     }
 
     

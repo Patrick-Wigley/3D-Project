@@ -167,7 +167,7 @@ int Program::SetUp()
     this->ModelsSetUp();
 
     /* Shaders */
-    main_shader.ExtendedSetUp(SHADER_FOLDER_DIR + "main.glsl");
+    main_shader.ExtendedSetUp(SHADER_FOLDER_DIR + "Models.glsl");
     main_shader.SetBonesUniform();
     terrain_shader.SetUp(SHADER_FOLDER_DIR + "Terrain.glsl");
     // Note this->CubeMap has its own shader

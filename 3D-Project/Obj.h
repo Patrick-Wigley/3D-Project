@@ -64,7 +64,7 @@ private:
 
 public:
 	// For now, this is here as other shaders do not have this uniform
-	// Should make a shader class which is specific for the main.glsl uniforms
+	// Should make a shader class which is specific for the Models.glsl uniforms
 	// Uniform Location for bone transformations
 	
 
