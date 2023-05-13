@@ -69,7 +69,7 @@ private:
 
 	// Objs
 private:
-	std::vector<Light> m_Light_LightSources;
+	//std::vector<Light> m_Light_LightSources;
 
 
 
