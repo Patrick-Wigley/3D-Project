@@ -1,6 +1,6 @@
 # 3D-Project
 
-## Get Setup - (In VSCode)
+## Get Setup - (In Visual Studio)
 * Start an empty C++ Project in [Visual Studio](https://visualstudio.microsoft.com/vs/community/)
 * Download dependencies:
   * [GLFW](https://www.glfw.org/download.html) - (Precompiled Binaries) Select 32bit if running on Windows
