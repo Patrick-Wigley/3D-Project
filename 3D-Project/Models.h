@@ -8,7 +8,8 @@
 
 /* Constants */
 // Prefix to 'Assets/Textures'
-const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Textures\\";
+const static std::string TEXTURE_FOLDER = "3D-Project\\Assets\\Models\\Textures\\";
+const static std::string MODEL_FOLDER = "3D-Project\\Assets\\Models\\";
 // Prefix to 'Assets/Maps'
 const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 

@@ -365,7 +365,7 @@ RawTexture read_MTL(std::string file_name)
 RawModelContent load_OBJ(std::string file, int file_type)
 {
 
-	std::string file_name = TEXTURE_FOLDER + file;
+	std::string file_name = MODEL_FOLDER + file;
 	RawModelContent model_content;
 
 	if (file_type == (int)FILE_TYPES::OBJ)
@@ -502,7 +502,7 @@ void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_S
 
 	// Gather Assimp-Model Scene
 
-	this->pScene = this->Importer.ReadFile(TEXTURE_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
+	this->pScene = this->Importer.ReadFile(MODEL_FOLDER + fileName, ASSIMP_LOAD_FLAGS);
 
 	if (!pScene)
 		printf("\n[ASSIMP]: Err parsing '%s' - '%s'", fileName.c_str(), this->Importer.GetErrorString());
