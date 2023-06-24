@@ -30,7 +30,7 @@ const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
 
 #define DEBUG false
-#define WARNINGS_ENABLED true
+#define WARNINGS_ENABLED false
 
 const unsigned int NUM_BUFFERS = 6U;
 const unsigned int NUM_OF_VBOS = 5U;

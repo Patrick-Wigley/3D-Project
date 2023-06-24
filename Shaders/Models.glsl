@@ -12,7 +12,7 @@ out vec4 pos;
 out vec2 uv;
 flat out ivec4 frag_boneIds;
 out vec4 frag_weights;
-
+out vec3 norms;
 
 // Camera Vars
 uniform mat4 u_View;
@@ -38,6 +38,7 @@ void main()
     
     frag_boneIds = boneIDs;
     frag_weights = weights;
+    norms = normals;
 }                                         
 
 
@@ -51,7 +52,7 @@ in vec4 pos;
 in vec2 uv;
 flat in ivec4 frag_boneIds;
 in vec4 frag_weights;
-
+in vec3 norms;
 
 // Texture
 uniform sampler2D u_texture;
@@ -62,17 +63,35 @@ int MAX_BONES = 4;
 
 uniform int u_boneDisplayActive;
 
+const vec3 TemplightPos = vec3(0,10,0);
+
 void main()                               
 {
+    vec3 redColour = vec3(0.1, 0.1, 0.1); 
+
+    float ambientStrength =  .5;
+    vec3 ambient = ambientStrength * redColour;
+    
+    vec3 normals = normalize(norms);
+    
+    vec3 lightDir = normalize(TemplightPos - pos.xyz);
+    
+    float diff = max(dot(normals, lightDir), 0.0);
+    vec3 diffuse = diff * redColour;
+
+    vec3 result;
     // ATM Everything is textured - (add boolean to determine)
     if (u_isTextured)
-        colour = texture(u_texture, uv);
-    
+    {
+        result = vec3(texture(u_texture, uv).xyz);
+        result *= (ambient + diffuse);
+    }
     else
     {
-        colour = vec4(.1,.1,1,1);
+        result = (ambient + diffuse) * vec3(.1,.1,1);
     }
 
+    colour = vec4(result, 1.0);
     
     
 
