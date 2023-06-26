@@ -510,8 +510,12 @@ void Model::LoadModel(const std::string& fileName, float scale = DEFAULT_MODEL_S
 	{
 		this->m_ObjFileName = fileName;
 		
-		this->m_GlobalInverseTransform = this->pScene->mRootNode->mTransformation;
-		this->m_GlobalInverseTransform.Inverse();
+		if ((this->m_HasAnimations = this->pScene->HasAnimations()))
+		{
+			this->m_GlobalInverseTransform = this->pScene->mRootNode->mTransformation;
+			this->m_GlobalInverseTransform.Inverse();
+		}
+
 
 		this->InitialiseMeshesFromScene(this->pScene);
 		this->SetupBuffers();
@@ -526,10 +530,13 @@ bool Model::InitialiseMeshesFromScene(const aiScene* pScene)
 {
 	this->m_Meshes.resize(pScene->mNumMeshes);
 	this->m_MeshesCount = pScene->mNumMeshes;
+	
+	
 	this->SetCounts(pScene);
 	this->ReserveArrays();
 	this->ExtractMeshesData(pScene);
 	this->ExtractMaterialData(pScene);
+
 
 	return true;
 }
@@ -569,11 +576,7 @@ void Model::InitialiseSingleMesh(const aiMesh* paiMesh)
 {
 
 	const aiVector3D EmptyUV(0, 0, 0);
-	
-	aiBone bone;
-	bool hasBones;
-
-	
+		
 
 	for (unsigned int i = 0; i < paiMesh->mNumVertices; i++)
 	{
@@ -629,8 +632,6 @@ void Model::InitialiseSingleMeshBone(const aiBone* pBone)
 	
 		int boneID = this->GetBoneID(pBone);
 		this->m_Bones[vertexIDInVAO].AddData(boneID, weight.mWeight);
-		
-
 	}
 	
 }
@@ -937,15 +938,17 @@ void Model::SetupBuffers()
 	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL));
 	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::NORMAL), 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, bbo);
-	glBufferData(GL_ARRAY_BUFFER, this->m_Bones.size() * sizeof(this->m_Bones[0]), &this->m_Bones[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES));
-	glVertexAttribIPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES), MAX_BONES_PER_VERTEX, GL_INT, sizeof(VertexBoneData), 0);
-	glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS));
-	// Specify OFFSET - Location::BONES = BoneID's array THAN Location::WEIGHTS = Weights (which is located at offset of +BoneID's array 
-	glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS), MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, 
-		sizeof(VertexBoneData), (const GLvoid*)(MAX_BONES_PER_VERTEX * sizeof(int32_t)));
-
+	if (this->m_HasAnimations)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, bbo);
+		glBufferData(GL_ARRAY_BUFFER, this->m_Bones.size() * sizeof(this->m_Bones[0]), &this->m_Bones[0], GL_STATIC_DRAW);
+		glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES));
+		glVertexAttribIPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::BONES), MAX_BONES_PER_VERTEX, GL_INT, sizeof(VertexBoneData), 0);
+		glEnableVertexAttribArray(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS));
+		// Specify OFFSET - Location::BONES = BoneID's array THAN Location::WEIGHTS = Weights (which is located at offset of +BoneID's array 
+		glVertexAttribPointer(ENUM_UINT(VAO_BUFFER_LOCATIONS::WEIGHTS), MAX_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, 
+			sizeof(VertexBoneData), (const GLvoid*)(MAX_BONES_PER_VERTEX * sizeof(int32_t)));
+	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->m_Indices.size() * sizeof(unsigned int), this->m_Indices.data(), GL_DYNAMIC_DRAW);
@@ -959,7 +962,8 @@ void Model::ReserveArrays()
 	this->m_UVs.reserve(this->m_VerticesCount);
 	this->m_Indices.reserve(this->m_IndicesCount);
 
-	this->m_Bones.resize(this->m_VerticesCount);
+	if (this->m_HasAnimations)
+		this->m_Bones.resize(this->m_VerticesCount);
 }
 
 

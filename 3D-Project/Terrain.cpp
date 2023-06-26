@@ -31,7 +31,7 @@ void Terrain::SetUp()
 
 	this->model_content = model.model_content;
 
-	//this->model_content = model.model_content;
+	//this->model_content = model.model_content; 
 	this->texture_content = model.texture_content;
 
 	this->Set_Counts(this->model_content);

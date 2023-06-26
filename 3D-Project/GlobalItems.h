@@ -29,13 +29,16 @@
 // SystemInfo - (Needs "Kernal.dll" & "Kernal.lib")
 #include <Windows.h>
 
+// Just testing linking this head file here. May need to fix includes by putting them in here.
+#include "Lighting.h"
 
 
+// TypeDefs
 typedef GLFWwindow Window;
 
 typedef glm::vec3 Vector3;
 typedef glm::vec2 Vector2;
-
+// #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
 
 /* Macros */ 
@@ -55,6 +58,7 @@ typedef glm::vec2 Vector2;
 #define SCALE_KEY = 0
 #define POSITION_KEY = 1
 #define ROTATION_KEY = 2
+// #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 
 
 

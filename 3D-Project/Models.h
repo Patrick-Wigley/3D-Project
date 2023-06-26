@@ -31,7 +31,7 @@ const static std::string MAPS_FOLDER = "3D-Project\\Assets\\Maps\\";
 
 
 #define DEBUG false
-#define WARNINGS_ENABLED true
+#define WARNINGS_ENABLED false
 
 const unsigned int NUM_BUFFERS = 6U;
 const unsigned int NUM_OF_VBOS = 5U;
@@ -158,6 +158,9 @@ private:
 	void CalculateInterpolatedPositioning(aiVector3D& r_Vec, const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	unsigned int GetCurrentPositionKeyIndex(const aiNodeAnim* pNodeAnimation, float AnimationTime);
 	
+public:
+	bool m_HasAnimations;
+
 private:
 	Matrix4f m_GlobalInverseTransform;
 	const float DEFAULT_ANIMATION_TICKS_PER_SECOND = 25.0f;

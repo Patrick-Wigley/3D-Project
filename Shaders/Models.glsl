@@ -12,7 +12,7 @@ out vec4 pos;
 out vec2 uv;
 flat out ivec4 frag_boneIds;
 out vec4 frag_weights;
-
+out vec3 norms;
 
 // Camera Vars
 uniform mat4 u_View;
@@ -26,6 +26,7 @@ uniform mat4 u_Bones[MAX_BONES];
 
 void main()                               
 {          
+    // Need to create a seperate shader for non-animated models
     mat4 BoneTransform = u_Bones[boneIDs[1]] * weights[1];
     BoneTransform     += u_Bones[boneIDs[0]] * weights[0];
     BoneTransform     += u_Bones[boneIDs[2]] * weights[2];
@@ -38,6 +39,7 @@ void main()
     
     frag_boneIds = boneIDs;
     frag_weights = weights;
+    norms = normals;
 }                                         
 
 
@@ -51,55 +53,56 @@ in vec4 pos;
 in vec2 uv;
 flat in ivec4 frag_boneIds;
 in vec4 frag_weights;
-
+<<<<<<<< HEAD:Shaders/Models.glsl
+in vec3 norms;
+========
+>>>>>>>> 3e908c90e5ffd85c9a8d8b6a6f958a821c2e19bd:Shaders/AnimatedModels.glsl
 
 // Texture
 uniform sampler2D u_texture;
 uniform bool u_isTextured;
 
-// Current hard coded
+// CONSTS
 int MAX_BONES = 4;
 
-uniform int u_boneDisplayActive;
+
+const vec3 TemplightPos = vec3(0,10,0);
 
 void main()                               
 {
+    vec3 redColour = vec3(0.1, 0.1, 0.1); 
+
+    float ambientStrength =  .5;
+    vec3 ambient = ambientStrength * redColour;
+    
+    vec3 normals = normalize(norms);
+    
+    vec3 lightDir = normalize(TemplightPos - pos.xyz);
+    
+    float diff = max(dot(normals, lightDir), 0.0);
+    vec3 diffuse = diff * redColour;
+
+    vec3 result;
     // ATM Everything is textured - (add boolean to determine)
     if (u_isTextured)
-        colour = texture(u_texture, uv);
-    
+    {
+        result = vec3(texture(u_texture, uv).xyz);
+        result *= (ambient + diffuse);
+    }
     else
     {
-        for (int i=0; i < MAX_BONES; i++)
-        {
-            if (frag_boneIds[i] == u_boneDisplayActive)
-            {
-                if (frag_weights[i] >= .7)
-                {
-                    // Predominantly active
-                    colour = vec4(0,1,0,1);
-                }
-                else if (frag_weights[i] >= .45)
-                {
-                    colour = vec4(0,.75,0,1);
-                }
-                else if (frag_weights[i] >= .1)
-                {
-                    colour = vec4(0,.50,0,1);
-                }
-                else
-                {
-                    // Not active 
-                    colour = vec4(0,0,0,1);
-                }
-            }
-        }
-        
+<<<<<<<< HEAD:Shaders/Models.glsl
+        result = (ambient + diffuse) * vec3(.1,.1,1);
     }
 
+    colour = vec4(result, 1.0);
     
     
 
     //colour = vec4(.1, .5, .3, 1.0) * pos;
     //colour = vec4(0,0,0, 1.0);
+========
+        colour = vec4(.1, .1, 1, 1);
+    }
+>>>>>>>> 3e908c90e5ffd85c9a8d8b6a6f958a821c2e19bd:Shaders/AnimatedModels.glsl
 }                                         
