@@ -6,8 +6,6 @@ const std::string SHADER_FOLDER_DIR = "3D-Project\\Shaders\\";
 
 class Shader
 {
-
-
 public:
 	unsigned int shader;
 
@@ -23,12 +21,7 @@ public:
 
 
 	// Uniforms
-public:
-	// only used for main.glsl
-	void SetBonesUniform();
-	// Max bones is current 100
-	int m_u_Bones[100];
-	
+public:	
 	int u_modelMatrix;
 
 	// Array of Textures THEN Maps
@@ -40,22 +33,23 @@ public:
 	int u_projection;
 	int u_cam_pos;
 	void UpdateCameraUniforms(Camera* camera);
+
+	// Uniforms used Animated Models
+public:
+	// Max bones is current 100
+	int m_u_Bones[100];
 };
 
 
 
-// NOTE: If wish to extend properties such as uniforms of other shaders, create sub class as shown below:
-// This is the "MainShader". This has extended properties
+// Shader class used for models - (Both animated & non-animated models extend from this class)
 class ObjectShader : public Shader
 {
-	
-
 	// Extended Properties
 private:
 	int u_isTextured;
 
-
-
+	 
 public:
 	void ExtendedSetUp(std::string file_name);
 	void UpdateIsTexturedUniform(bool);
@@ -64,9 +58,40 @@ public:
 	// Constructors
 public:
 	ObjectShader();
-
 };
 
+
+/* #-#-#- Shader Specific Classes -#-#-# */
+
+// Animated Models Shader
+// This shader consists of usage of - (not limited too these):
+// - Bones Matrices Array of model 
+// - BoneID's in VAO which influence a Vertex
+// - Weight's in VAO which declare the intensity of which a bone influences the vertex
+class AnimatedModelShader : public ObjectShader 
+{
+public:
+	void LoadShader(std::string file_name);
+
+public:
+	// only used for main.glsl
+	void SetBonesUniform();
+	
+
+	// Constructors
+public:
+	AnimatedModelShader();
+};
+
+
+// Non-animated Models Shader
+class PlainModelShader : public ObjectShader
+{
+public:
+	void LoadShader(std::string file_name);
+public:
+	PlainModelShader();
+};
 
 
 class TerrainShader : public Shader

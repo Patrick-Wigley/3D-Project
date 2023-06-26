@@ -196,23 +196,10 @@ void Shader::UpdateUniforms()
 
 }
 
-void Shader::SetBonesUniform()
-{
-    //this->m_u_Bones = glGetUniformLocation(this->shader, "u_Bones");
-   
-    for (unsigned int i = 0; i < MAX_BONES; i++)
-    {
-        
-        std::string uniformName("u_Bones[" + std::to_string(i) + "]");
-        
-        //printf("\n%s", uniformName.c_str());
-        this->m_u_Bones[i] = glGetUniformLocation(this->shader, uniformName.c_str());
-    }
-}
 
 
 
-// Shader Sub-Classes
+
 ObjectShader::ObjectShader()
 {
 }
@@ -233,6 +220,27 @@ void ObjectShader::UpdateIsTexturedUniform(bool isTextured)
 {
     glUniform1i(this->u_isTextured, isTextured);
 }
+
+/* #-#-#- Shader Specific Classes -#-#-# */
+
+
+AnimatedModelShader::AnimatedModelShader()
+{
+}
+void AnimatedModelShader::SetBonesUniform()
+{
+    for (unsigned int i = 0; i < MAX_BONES; i++)
+    {
+        std::string uniformName("u_Bones[" + std::to_string(i) + "]");
+        this->m_u_Bones[i] = glGetUniformLocation(this->shader, uniformName.c_str());
+    }
+}
+
+
+PlainModelShader::PlainModelShader()
+{
+}
+
 
 
 TerrainShader::TerrainShader()

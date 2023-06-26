@@ -26,6 +26,7 @@ uniform mat4 u_Bones[MAX_BONES];
 
 void main()                               
 {          
+    // Need to create a seperate shader for non-animated models
     mat4 BoneTransform = u_Bones[boneIDs[1]] * weights[1];
     BoneTransform     += u_Bones[boneIDs[0]] * weights[0];
     BoneTransform     += u_Bones[boneIDs[2]] * weights[2];
@@ -52,16 +53,18 @@ in vec4 pos;
 in vec2 uv;
 flat in ivec4 frag_boneIds;
 in vec4 frag_weights;
+<<<<<<<< HEAD:Shaders/Models.glsl
 in vec3 norms;
+========
+>>>>>>>> 3e908c90e5ffd85c9a8d8b6a6f958a821c2e19bd:Shaders/AnimatedModels.glsl
 
 // Texture
 uniform sampler2D u_texture;
 uniform bool u_isTextured;
 
-// Current hard coded
+// CONSTS
 int MAX_BONES = 4;
 
-uniform int u_boneDisplayActive;
 
 const vec3 TemplightPos = vec3(0,10,0);
 
@@ -88,6 +91,7 @@ void main()
     }
     else
     {
+<<<<<<<< HEAD:Shaders/Models.glsl
         result = (ambient + diffuse) * vec3(.1,.1,1);
     }
 
@@ -97,4 +101,8 @@ void main()
 
     //colour = vec4(.1, .5, .3, 1.0) * pos;
     //colour = vec4(0,0,0, 1.0);
+========
+        colour = vec4(.1, .1, 1, 1);
+    }
+>>>>>>>> 3e908c90e5ffd85c9a8d8b6a6f958a821c2e19bd:Shaders/AnimatedModels.glsl
 }                                         
