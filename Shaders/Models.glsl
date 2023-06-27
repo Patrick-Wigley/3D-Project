@@ -70,7 +70,7 @@ void main()
 {
     vec3 redColour = vec3(0.1, 0.1, 0.1); 
 
-    float ambientStrength =  .5;
+    float ambientStrength =  .01;
     vec3 ambient = ambientStrength * redColour;
     
     vec3 normals = normalize(norms);
